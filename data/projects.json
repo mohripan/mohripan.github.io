@@ -1,0 +1,34 @@
+[
+  {
+    "url": "https://github.com/mohripan/flint-graph",
+    "name": "FlintGraph",
+    "category": "AI systems",
+    "summary": "From source documents to a knowledge graph. A GraphRAG platform with traceable, citation-bearing answers.",
+    "tags": ["Python", "GraphRAG", "Temporal"],
+    "roadmapPath": "docs/ROADMAP.md"
+  },
+  {
+    "url": "https://github.com/mohripan/capsulet",
+    "name": "Capsulet",
+    "category": "Workflow engines",
+    "summary": "Correctness-first AI-agent workflows. Typed graphs, governed memory, and execution you can inspect.",
+    "tags": ["Rust", "AI agents", "Workflow orchestration"]
+  },
+  {
+    "url": "https://github.com/mohripan/workflow-automations",
+    "name": "FlowForge",
+    "category": "Workflow engines",
+    "summary": "Event-driven automation in .NET. From trigger conditions to jobs running across distributed worker hosts.",
+    "tags": ["C# / .NET", "Redis", "Distributed systems"],
+    "roadmapPath": "docs/ROADMAP.md"
+  },
+  {
+    "url": "https://github.com/mohripan/HarmonixBenar",
+    "name": "Harmonix",
+    "category": "Experiments",
+    "summary": "An earlier Unity and C# project. A look back at the creative side of building software.",
+    "tags": ["Unity", "C#", "Archive"],
+    "status": "Archived project",
+    "fallbackAbout": "HarmonixBenar is an earlier Unity project built with C#. Its repository contains scenes, scripts, animation, art, and audio assets. The README currently contains only the project title, so this description is maintained in the portfolio configuration."
+  }
+]

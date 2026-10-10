@@ -1,0 +1,31 @@
+{
+  "name": "Mohammad Ripan",
+  "fullName": "Mohammad Ripan Saiful Mansur",
+  "username": "mohripan",
+  "role": "Senior Machine Learning Systems Engineer",
+  "company": "Media Info Groep",
+  "location": "Jakarta, Indonesia",
+  "headline": "Engineering in progress.",
+  "intro": "I build AI systems, workflow engines, and the infrastructure that makes them reliable. This is a living record of the things I'm building — and the details along the way.",
+  "about": "I'm a software engineer working at the intersection of AI systems, distributed computing, and infrastructure engineering. My background spans backend architecture, distributed systems, and integration engineering. Today, I focus on production AI platforms, LLM applications, and the infrastructure behind them.",
+  "interests": [
+    "AI infrastructure",
+    "Distributed systems",
+    "Developer experience",
+    "Reliability & observability"
+  ],
+  "skills": [
+    "Python",
+    "Rust",
+    "C# / .NET",
+    "C/C++",
+    "Kubernetes",
+    "PostgreSQL",
+    "OpenTelemetry"
+  ],
+  "links": {
+    "github": "https://github.com/mohripan",
+    "linkedin": "https://www.linkedin.com/in/mohammad-ripan-b68522141",
+    "email": "mailto:mohripan16@gmail.com"
+  }
+}
