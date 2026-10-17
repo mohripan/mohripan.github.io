@@ -19,7 +19,9 @@ export default function ProjectDiagram({ project }: { project: Project }) {
       ? "capsule"
       : project.repo.endsWith("workflow-automations")
         ? "flow"
-        : "unity";
+        : project.repo.endsWith("capsulet-mesh-train")
+          ? "training"
+          : "unity";
   const icons =
     type === "graph"
       ? [FileText, Network, Sparkles]
@@ -27,7 +29,9 @@ export default function ProjectDiagram({ project }: { project: Project }) {
         ? [GitBranch, ShieldCheck, Box]
         : type === "flow"
           ? [Braces, Database, Play]
-          : [Box, Layers, Sparkles];
+          : type === "training"
+            ? [Layers, Network, Play]
+            : [Box, Layers, Sparkles];
   const labels =
     type === "graph"
       ? ["ingest", "connect", "retrieve"]
@@ -35,7 +39,9 @@ export default function ProjectDiagram({ project }: { project: Project }) {
         ? ["define", "validate", "execute"]
         : type === "flow"
           ? ["trigger", "dispatch", "run"]
-          : ["scene", "script", "create"];
+          : type === "training"
+            ? ["gradients", "reduce", "update"]
+            : ["scene", "script", "create"];
   return (
     <div
       className={`project-diagram diagram-${type}`}
@@ -60,7 +66,9 @@ export default function ProjectDiagram({ project }: { project: Project }) {
             ? "correctness at every step"
             : type === "flow"
               ? "events → distributed execution"
-              : "an earlier creative experiment"}
+              : type === "training"
+                ? "gradients → reduce → update"
+                : "an earlier creative experiment"}
       </span>
     </div>
   );

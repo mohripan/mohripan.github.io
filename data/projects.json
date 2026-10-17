@@ -15,6 +15,14 @@
     "tags": ["Rust", "AI agents", "Workflow orchestration"]
   },
   {
+    "url": "https://github.com/mohripan/capsulet-mesh-train",
+    "name": "Capsulet Mesh Train",
+    "category": "AI systems",
+    "summary": "Custom transports and collective algorithms for distributed training, built in C++ with planned PyTorch integration.",
+    "tags": ["C++", "Distributed training", "PyTorch"],
+    "roadmapPath": "docs/ROADMAP.md"
+  },
+  {
     "url": "https://github.com/mohripan/workflow-automations",
     "name": "FlowForge",
     "category": "Workflow engines",
