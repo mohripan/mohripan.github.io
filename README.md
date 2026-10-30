@@ -1,8 +1,8 @@
 # Ripan's engineering workspace
 
-A dark, rust-accented portfolio and project progress tracker, built with React, TypeScript, and Vite. Published at **https://mohripan.github.io/**.
+A dark, rust-accented portfolio and personal project tracker, built with React, TypeScript, and Vite. Published at **https://mohripan.github.io/**.
 
-Features project search and category filters, repository README views, milestone roadmaps, repository checklist progress, commits and PRs with automation labels, and an editable personal profile. No application server or database service is required.
+The professional side covers experience, focus areas, skills, education, awards, and contact details. The project side has search and category filters, repository README views, milestone roadmaps, repository checklist progress, and commits and PRs with automation labels. No application server or database service is required.
 
 ## Run locally
 
@@ -51,9 +51,9 @@ npm run sync
 
 The script uses `GITHUB_TOKEN` when provided, otherwise your existing `gh auth` session, otherwise GitHub's unauthenticated public API. Credentials stay in process memory and never enter the generated JSON or frontend. A failed sync leaves the previous snapshot intact and stops deployment.
 
-## Edit the profile
+## Edit the profile and resume
 
-Update `data/profile.json` for the name, role, company, location, biography, interests, technologies, and contact links. The initial content comes from the public GitHub profile README. Harmonix is mapped to the public `HarmonixBenar` repository; its title-only README uses `fallbackAbout`.
+Update `data/profile.json` for the name, role, company, location, introduction, about paragraphs, hero awards, and contact details. Update `data/resume.json` for the headline numbers, focus areas, experience (each role lists its projects, responsibilities, and stack), skill groups, working strengths, education, and awards. Both files are bundled at build time, so a push is all it takes to publish a change. Harmonix is mapped to the public `HarmonixBenar` repository; its title-only README uses `fallbackAbout`.
 
 ## What progress means
 

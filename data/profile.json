@@ -3,29 +3,27 @@
   "fullName": "Mohammad Ripan Saiful Mansur",
   "username": "mohripan",
   "role": "Senior Machine Learning Systems Engineer",
+  "specialty": "AI infrastructure & distributed systems",
   "company": "Media Info Groep",
-  "location": "Jakarta, Indonesia",
-  "headline": "Engineering in progress.",
-  "intro": "I build AI systems, workflow engines, and the infrastructure that makes them reliable. This is a living record of the things I'm building — and the details along the way.",
-  "about": "I'm a software engineer working at the intersection of AI systems, distributed computing, and infrastructure engineering. My background spans backend architecture, distributed systems, and integration engineering. Today, I focus on production AI platforms, LLM applications, and the infrastructure behind them.",
-  "interests": [
-    "AI infrastructure",
-    "Distributed systems",
-    "Developer experience",
-    "Reliability & observability"
+  "location": "Jakarta Selatan, Indonesia",
+  "headline": "Mohammad Ripan.",
+  "intro": "Technical lead for distributed compute, AI inference infrastructure, and scalable execution architectures. I design the systems that keep LLM serving, agent workflows, and scientific workloads fast and reliable, and I still write the code.",
+  "about": [
+    "I'm a Senior Machine Learning Systems Engineer and technical lead specializing in distributed compute, AI inference infrastructure, and scalable execution architectures. My work covers vLLM-based LLM serving, distributed workflow orchestration, conversational AI systems, and real-time speech processing experiments.",
+    "I've architected asynchronous compute platforms for distributed inference, scientific workloads, and heterogeneous execution environments. Before that I worked on banking backends, warehouse robotics, hospital automation, and award-winning applied IoT research. Across all of it I care about latency you can measure, infrastructure other teams can reuse, and keeping my hands in the code."
   ],
-  "skills": [
-    "Python",
-    "Rust",
-    "C# / .NET",
-    "C/C++",
-    "Kubernetes",
-    "PostgreSQL",
-    "OpenTelemetry"
+  "honors": [
+    { "label": "AICTA 2021", "detail": "ASEAN 3rd place, R&D" },
+    { "label": "IdenTIK 2020", "detail": "National R&D winner" }
   ],
   "links": {
     "github": "https://github.com/mohripan",
     "linkedin": "https://www.linkedin.com/in/mohammad-ripan-b68522141",
-    "email": "mailto:mohripan16@gmail.com"
+    "email": "mailto:mohripan16@gmail.com",
+    "whatsapp": "https://wa.me/6287880913963"
+  },
+  "contact": {
+    "email": "mohripan16@gmail.com",
+    "phone": "+62 878-8091-3963"
   }
 }

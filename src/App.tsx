@@ -3,10 +3,13 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUpRight,
+  Award,
+  Briefcase,
   CircleDashed,
   ChevronDown,
   GitPullRequest,
   Mail,
+  MessageCircle,
   Milestone,
   Search,
   Terminal,
@@ -14,6 +17,7 @@ import {
 } from "lucide-react";
 import Github from "./GithubIcon";
 import profile from "../data/profile.json";
+import resume from "../data/resume.json";
 import rawSnapshot from "./data/github.json";
 import type { Project, Snapshot } from "./types";
 import {
@@ -25,6 +29,9 @@ import {
 import ProjectDiagram from "./ProjectDiagram";
 import ActivityFeed from "./ActivityFeed";
 import Roadmap from "./Roadmap";
+import Experience from "./Experience";
+import Skills from "./Skills";
+import Recognition from "./Recognition";
 
 const ProjectDialog = lazy(() => import("./ProjectDialog"));
 const snapshot = rawSnapshot as Snapshot;
@@ -107,14 +114,17 @@ export default function App() {
             className={menuOpen ? "is-open" : ""}
             aria-label="Main navigation"
           >
+            <a href="#experience" onClick={() => setMenuOpen(false)}>
+              Experience
+            </a>
             <a href="#projects" onClick={() => setMenuOpen(false)}>
               Projects
             </a>
             <a href="#roadmap" onClick={() => setMenuOpen(false)}>
               Roadmap
             </a>
-            <a href="#activity" onClick={() => setMenuOpen(false)}>
-              Activity
+            <a href="#skills" onClick={() => setMenuOpen(false)}>
+              Skills
             </a>
             <a href="#about" onClick={() => setMenuOpen(false)}>
               About me
@@ -137,21 +147,35 @@ export default function App() {
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
             <div className="eyebrow">
-              <span className="status-dot" />A living portfolio{" "}
-              <span className="eyebrow-divider">/</span> @{profile.username}
+              <span className="status-dot" />
+              Portfolio & build log <span className="eyebrow-divider">/</span>{" "}
+              @{profile.username}
             </div>
             <h1 id="hero-title">
               {profile.headline.split(" ")[0]}
               <br />
               <span>{profile.headline.split(" ").slice(1).join(" ")}</span>
             </h1>
+            <p className="hero-role">
+              {profile.role}
+              <span>{profile.specialty}</span>
+            </p>
             <p>{profile.intro}</p>
+            <div className="hero-honors" aria-label="Selected awards">
+              {profile.honors.map((honor) => (
+                <span key={honor.label}>
+                  <Award size={13} />
+                  <strong>{honor.label}</strong>
+                  {honor.detail}
+                </span>
+              ))}
+            </div>
             <div className="hero-actions">
-              <a href="#projects" className="primary-button">
-                Explore the projects <ArrowDown size={16} />
+              <a href="#experience" className="primary-button">
+                See my experience <ArrowDown size={16} />
               </a>
               <a href="#about" className="text-button">
-                Meet the engineer <ArrowUpRight size={15} />
+                Get in touch <ArrowUpRight size={15} />
               </a>
             </div>
             <div className="hero-person">
@@ -162,8 +186,8 @@ export default function App() {
                 height="34"
               />
               <div>
-                <strong>{profile.name}</strong>
-                <span>{profile.role}</span>
+                <strong>Currently at {profile.company}</strong>
+                <span>{profile.location}</span>
               </div>
             </div>
           </div>
@@ -229,32 +253,33 @@ export default function App() {
         </section>
 
         <div className="workspace-stats">
-          <div>
-            <strong>{projects.length.toString().padStart(2, "0")}</strong>
-            <span>Featured projects</span>
-          </div>
-          <div>
-            <strong>{totalMilestones.toString().padStart(2, "0")}</strong>
-            <span>Tracked milestones</span>
-          </div>
-          <div>
-            <strong>{recentPRs.toString().padStart(2, "0")}</strong>
-            <span>Recent pull requests</span>
-          </div>
-          <p>
-            <span className="status-dot" />
-            Building in the open<span>One commit at a time.</span>
-          </p>
+          {resume.highlights.map((highlight) => (
+            <div key={highlight.label}>
+              <strong>{highlight.value}</strong>
+              <span>{highlight.label}</span>
+            </div>
+          ))}
         </div>
+
+        <Experience />
 
         <section id="projects" className="projects-section">
           <div className="section-heading">
             <div>
-              <span className="eyebrow section-eyebrow">The work</span>
+              <span className="eyebrow section-eyebrow">Personal projects</span>
               <h2>
-                Projects, with a paper trail<span>.</span>
+                Side builds, with a paper trail<span>.</span>
               </h2>
-              <p>What I'm building, where it stands, and what comes next.</p>
+              <p>
+                What I'm building outside work, where it stands, and what comes
+                next.
+              </p>
+              <span className="heading-meta">
+                <span className="status-dot" />
+                {projects.length.toString().padStart(2, "0")} projects /{" "}
+                {totalMilestones.toString().padStart(2, "0")} milestones /{" "}
+                {recentPRs.toString().padStart(2, "0")} recent pull requests
+              </span>
             </div>
             <a
               className="text-button muted-link"
@@ -490,6 +515,9 @@ export default function App() {
           <ActivityFeed projects={projects} />
         </section>
 
+        <Skills />
+        <Recognition />
+
         <section id="about" className="about-section">
           <div className="about-left">
             <span className="eyebrow section-eyebrow">Behind the commits</span>
@@ -497,7 +525,7 @@ export default function App() {
               Hi, I'm Ripan<span>.</span>
             </h2>
             <p className="about-thesis">
-              I like the parts of engineering
+              I like the parts of engineering{" "}
               <br />
               that make everything else work.
             </p>
@@ -505,6 +533,48 @@ export default function App() {
               <span className="status-dot" />
               {profile.location}
             </div>
+            <ul className="contact-list" aria-label="Contact">
+              <li>
+                <a href={profile.links.email}>
+                  <Mail size={17} />
+                  <span>
+                    <small>Email</small>
+                    <strong>{profile.contact.email}</strong>
+                  </span>
+                  <ArrowUpRight size={15} />
+                </a>
+              </li>
+              <li>
+                <a href={profile.links.whatsapp} target="_blank" rel="noreferrer">
+                  <MessageCircle size={17} />
+                  <span>
+                    <small>WhatsApp</small>
+                    <strong>{profile.contact.phone}</strong>
+                  </span>
+                  <ArrowUpRight size={15} />
+                </a>
+              </li>
+              <li>
+                <a href={profile.links.linkedin} target="_blank" rel="noreferrer">
+                  <Briefcase size={17} />
+                  <span>
+                    <small>LinkedIn</small>
+                    <strong>{profile.fullName}</strong>
+                  </span>
+                  <ArrowUpRight size={15} />
+                </a>
+              </li>
+              <li>
+                <a href={profile.links.github} target="_blank" rel="noreferrer">
+                  <Github size={17} />
+                  <span>
+                    <small>GitHub</small>
+                    <strong>github.com/{profile.username}</strong>
+                  </span>
+                  <ArrowUpRight size={15} />
+                </a>
+              </li>
+            </ul>
           </div>
           <div className="about-right">
             <div className="about-role">
@@ -519,32 +589,22 @@ export default function App() {
                 <span>{profile.company}</span>
               </div>
             </div>
-            <p>{profile.about}</p>
-            <div className="about-interests">
-              {profile.interests.map((interest) => (
-                <span key={interest}>
-                  <ArrowRight size={13} />
-                  {interest}
-                </span>
-              ))}
-            </div>
-            <div className="about-skills">
-              {profile.skills.map((skill) => (
-                <span key={skill}>{skill}</span>
-              ))}
-            </div>
-            <div className="about-links">
-              <a href={profile.links.github} target="_blank" rel="noreferrer">
-                <Github size={16} />
-                GitHub <ArrowUpRight size={14} />
-              </a>
-              <a href={profile.links.linkedin} target="_blank" rel="noreferrer">
-                LinkedIn <ArrowUpRight size={14} />
-              </a>
-              <a href={profile.links.email}>
-                <Mail size={16} />
-                Say hello <ArrowUpRight size={14} />
-              </a>
+            {profile.about.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+            <div className="strengths">
+              <span className="mono-label">How I work</span>
+              <ol>
+                {resume.strengths.map((strength, i) => (
+                  <li key={strength.title}>
+                    <span>{(i + 1).toString().padStart(2, "0")}</span>
+                    <div>
+                      <strong>{strength.title}</strong>
+                      <p>{strength.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         </section>

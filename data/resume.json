@@ -1,0 +1,306 @@
+{
+  "highlights": [
+    { "value": "<1 min", "label": "Agentic workflows, down from ~15 minutes" },
+    { "value": "~12", "label": "Projects on a shared platform I own" },
+    { "value": "8 yrs", "label": "Shipping production software" },
+    { "value": "4", "label": "National & ASEAN competition honors" }
+  ],
+  "focus": [
+    {
+      "icon": "audio",
+      "title": "Inference & speech",
+      "text": "vLLM serving, concurrent audio-stream ingestion and transcription, and music, ad, and speech classification experiments, with model-quality evaluation built in."
+    },
+    {
+      "icon": "compute",
+      "title": "Scheduling & compute",
+      "text": "Distributed inference and scientific job execution, workload-aware host groups, and multi-user GPU sharing on Kubernetes with JupyterHub and HAMi."
+    },
+    {
+      "icon": "systems",
+      "title": "Reusable ML systems",
+      "text": "Durable Temporal agent workflows, WAL-inspired conversation state, instrumentation, regression testing, and fast experimental iteration."
+    }
+  ],
+  "experience": [
+    {
+      "company": "Media Info Groep",
+      "location": "Jakarta",
+      "title": "Senior Machine Learning Systems Engineer",
+      "start": "Sep 2026",
+      "end": "Present",
+      "focus": "The ArtikelPro AI agent initiative for the Netherlands, ML infrastructure, and broadcast-audio experimentation.",
+      "engagements": [
+        {
+          "name": "ArtikelPro AI agents, vLLM serving & speech",
+          "role": "Technical lead",
+          "points": [
+            "Own the core architecture and production evolution of the AI assistant and agent workflows behind ArtikelPro, operating across tens of thousands of documents.",
+            "Integrate vLLM-based LLM serving with agent execution, document retrieval, and conversational workflows for low-latency, reliable document intelligence.",
+            "Lead real-time, multi-channel radio transcription and audio classification experiments: concurrent stream processing, speech recognition, and detection of music, advertisements, and other broadcast segments."
+          ],
+          "stack": ["vLLM", "Python", "PyTorch", "STT / audio", "Retrieval systems"]
+        },
+        {
+          "name": "Conversational state, latency & model evaluation",
+          "role": "Architecture & hands-on delivery",
+          "points": [
+            "Cut complex agentic workflow latency from up to ~15 minutes to under 1 minute in common cases with search budgets, execution controls, and more efficient agent strategies.",
+            "Designed adaptive request routing across direct generation, CAG, and agentic search based on query intent and document context, removing unnecessary retrieval and execution overhead.",
+            "Architecting a WAL-inspired conversational state layer that decouples long-lived conversation history from Temporal workflow payloads to curb workflow-state growth (design in progress).",
+            "Built a quality-regression framework that evaluates model, prompt, retrieval, and architecture changes before production rollout."
+          ],
+          "stack": ["Temporal", "PydanticAI", "Vespa", "OpenSearch", "pgvector", "Phoenix", "MLflow"]
+        },
+        {
+          "name": "Shared GPU platform & AI observability",
+          "role": "Platform architecture & implementation",
+          "points": [
+            "Distribute JupyterHub ML experimentation workloads across Kubernetes GPU hosts, using HAMi for GPU sharing and allocation.",
+            "Built centralized telemetry for an on-premises Kubernetes/k3s AI platform: application traces, logs, metrics, and AI-specific agent execution traces."
+          ],
+          "stack": ["HAMi", "JupyterHub", "Kubernetes / k3s", "OpenTelemetry", "Prometheus", "Grafana", "Loki", "Jaeger"]
+        }
+      ]
+    },
+    {
+      "company": "DHI Water & Environment",
+      "location": "Jakarta",
+      "title": "Specialist, Senior Software Engineer",
+      "start": "Apr 2025",
+      "end": "Aug 2026",
+      "focus": "Scientific computing, distributed execution, and shared backend platforms used across products.",
+      "engagements": [
+        {
+          "name": "Distributed workflow & compute orchestration",
+          "role": "Technical lead & architect",
+          "points": [
+            "Led architecture and hands-on implementation of an asynchronous execution platform for distributed inference, forecasting, CPU-intensive scientific jobs, and MPI-based computation.",
+            "Designed reusable execution boundaries and host-group-based resource routing for heterogeneous workloads across cloud and on-premises environments."
+          ],
+          "stack": ["Distributed compute", "MPI", "Async workflows", "Host-group scheduling"]
+        },
+        {
+          "name": "Domain Services, a shared backend platform",
+          "role": "Platform lead & owner",
+          "points": [
+            "Took technical ownership of Domain Services, a shared C#/.NET backend platform used across ~12 projects, leading its implementation, upgrades, and continued evolution.",
+            "Drove upgrades, implementation standards, and adoption across five actively integrating projects."
+          ],
+          "stack": ["C# / .NET", "Shared backend", "Versioned APIs"]
+        },
+        {
+          "name": "Architecture Board & reusable OPC UA integration",
+          "role": "Specialist & architect",
+          "points": [
+            "Served on DHI's Architecture Board, defining versioning policies, implementation standards, and adoption practices for shared backend and integration components.",
+            "Architected a cloud/on-prem-agnostic OPC UA integration platform so multiple client applications share one integration layer, reducing per-client work for future device additions."
+          ],
+          "stack": ["OPC UA", "Backend APIs", "Architecture standards", "Cloud / on-prem"]
+        }
+      ]
+    },
+    {
+      "company": "Infolog Solutions Pte Ltd",
+      "location": "Bandung",
+      "title": "Senior Software Engineer",
+      "start": "Sep 2024",
+      "end": "Apr 2025",
+      "focus": "Warehouse robotics, found-property workflow software, and healthcare automation.",
+      "engagements": [
+        {
+          "name": "Meteor, Hikrobot warehouse automation",
+          "role": "Technical lead",
+          "points": [
+            "Led implementation of Meteor, a Hikrobot-based warehouse robotics automation solution.",
+            "Built a thread-safe task orchestration layer coordinating robots, lockers, and vision systems across REST, TCP/IP, SDK, Bluetooth-bridge, and event-stream interfaces."
+          ],
+          "stack": ["Hikrobot", "Robot orchestration", "REST / TCP/IP", "SDKs", "Concurrency"]
+        },
+        {
+          "name": "FUPO / FPMS found-property management",
+          "role": "Implementation lead",
+          "points": [
+            "Led implementation of found-property workflows and integration components for a business application."
+          ],
+          "stack": ["Business workflows", "Systems integration", "Backend services"]
+        },
+        {
+          "name": "Automatic Dispensing System middleware",
+          "role": "Senior engineer",
+          "points": [
+            "Implemented secure TCP-socket middleware for an Automatic Dispensing System, enabling reliable hospital automation workflows and clean device-layer integration."
+          ],
+          "stack": ["TCP sockets", "Middleware", "Device integration"]
+        }
+      ]
+    },
+    {
+      "company": "KB Data Systems",
+      "location": "Jakarta Selatan",
+      "title": "Java Specialist",
+      "start": "Nov 2023",
+      "end": "Sep 2024",
+      "focus": "Core banking architecture for KB Bank and B2B products, plus enterprise system integrations.",
+      "engagements": [
+        {
+          "name": "Shared banking core & B2B integrations",
+          "role": "Backend implementation",
+          "points": [
+            "Worked on core backend components used both inside KB Bank and in bank-related B2B products.",
+            "Developed integrations across vendor and internal systems, including fraud-detection services, S3 object-storage workflows, and QRIS payment functionality."
+          ],
+          "stack": ["Java", "Core services", "Vendor APIs", "Fraud detection", "S3", "QRIS"]
+        },
+        {
+          "name": "Resilient notifications & async processing",
+          "role": "Java Specialist",
+          "points": [
+            "Reduced notification delivery failures with retry isolation, provider-failure handling, and more resilient batch processing for downstream service and network failures.",
+            "Built fault-tolerant asynchronous flows for high-volume notification workloads, improving reliability, fault isolation, and operational maintainability."
+          ],
+          "stack": ["Java", "Async / batch", "Retry & fault isolation"]
+        }
+      ]
+    },
+    {
+      "company": "Embedded Research Group",
+      "location": "Bandung",
+      "title": "Software Engineer",
+      "start": "Sep 2019",
+      "end": "Oct 2023",
+      "focus": "University-affiliated embedded systems, AI/IoT, and applied research.",
+      "engagements": [
+        {
+          "name": "Rivest, an AI-powered rider safety vest",
+          "role": "Project lead",
+          "points": [
+            "Led end-to-end software and system engineering for an IoT motorcycle-rider safety vest that combines computer vision and multi-sensor data, with connected backend and app components.",
+            "Won first place in the IdenTIK 2020 national R&D category and third place / bronze in AICTA 2021 R&D at ASEAN level."
+          ],
+          "stack": ["Computer vision", "IoT / sensors", "Backend / APIs", "Cloud integration"]
+        },
+        {
+          "name": "MooID, cattle health monitoring",
+          "role": "Engineering contributor",
+          "points": [
+            "Contributed to a livestock health monitoring system built as an applied IoT and software research project in 2020.",
+            "Member of the first-place team in the national IoT category at the Medion Innovation Competition 2020."
+          ],
+          "stack": ["IoT", "Data processing", "Web / backend"]
+        }
+      ]
+    },
+    {
+      "company": "Someah Kreatif Nusantara",
+      "location": "Bandung",
+      "title": "Full Stack Developer",
+      "start": "Sep 2018",
+      "end": "Sep 2019",
+      "focus": "Digital product development.",
+      "engagements": [
+        {
+          "name": "Nusantara, an Indonesian culture education platform",
+          "role": "Full stack developer",
+          "points": [
+            "Built and shipped an educational platform for Indonesian culture, owning backend architecture, API design, and frontend delivery end to end."
+          ],
+          "stack": ["Web / APIs", "Full stack", "Backend systems"]
+        }
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "icon": "audio",
+      "title": "AI inference & speech",
+      "items": ["vLLM", "LLM serving", "PyTorch", "TensorFlow", "Speech-to-text", "Real-time audio classification", "Model evaluation", "Inference orchestration"]
+    },
+    {
+      "icon": "workflow",
+      "title": "Agents & workflows",
+      "items": ["Temporal", "PydanticAI", "Agentic workflows", "Conversational AI", "Durable workflows", "RAG / CAG", "Async processing"]
+    },
+    {
+      "icon": "compute",
+      "title": "Distributed & GPU compute",
+      "items": ["Kubernetes", "k3s", "HAMi", "JupyterHub", "MPI", "Ray (experimental)", "Host-group scheduling", "Heterogeneous workload routing"]
+    },
+    {
+      "icon": "search",
+      "title": "Search & retrieval",
+      "items": ["Vespa", "OpenSearch", "pgvector", "PostgreSQL", "Hybrid & semantic retrieval"]
+    },
+    {
+      "icon": "observe",
+      "title": "AI observability",
+      "items": ["Arize Phoenix", "MLflow", "OpenTelemetry", "Prometheus", "Grafana", "Loki", "Jaeger"]
+    },
+    {
+      "icon": "code",
+      "title": "Languages & frameworks",
+      "items": ["Python", "C/C++", "Rust", "C# / .NET", "Java", "Go", "JavaScript", "TypeScript", "FastAPI", "ASP.NET", "React"]
+    },
+    {
+      "icon": "cloud",
+      "title": "Cloud & delivery",
+      "items": ["Docker", "AWS", "Azure", "Terraform", "CI/CD"]
+    },
+    {
+      "icon": "integration",
+      "title": "Data & integration",
+      "items": ["Kafka", "Redis", "RabbitMQ", "MongoDB", "MSSQL", "Oracle", "REST", "WebSocket", "WebRTC", "TCP/IP", "OPC UA"]
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Reusable systems architecture",
+      "text": "I separate orchestration, state, routing, and execution, across AI agents and heterogeneous scientific computing, and look after mature shared platforms that other teams build on."
+    },
+    {
+      "title": "End-to-end performance mindset",
+      "text": "Latency measurement, workload-specific routing, regression evaluation, and instrumentation, used to optimize complete workflows instead of isolated functions."
+    },
+    {
+      "title": "Hands-on ownership across domains",
+      "text": "I've led implementation in ML platforms, logistics robotics, enterprise services, and award-winning applied research, and I still work directly in the code."
+    }
+  ],
+  "education": {
+    "degree": "Bachelor of Computer Science",
+    "school": "Universitas Komputer Indonesia",
+    "location": "Bandung",
+    "years": "2019 – 2023",
+    "gpa": "3.86 / 4.00"
+  },
+  "awards": [
+    {
+      "year": "2023",
+      "name": "ICStar",
+      "detail": "ASEAN-level software engineering hackathon",
+      "result": "Finalist",
+      "scope": "ASEAN"
+    },
+    {
+      "year": "2021",
+      "name": "ASEAN ICT Awards (AICTA)",
+      "detail": "Research & Development, with Rivest",
+      "result": "3rd place / bronze",
+      "scope": "ASEAN"
+    },
+    {
+      "year": "2020",
+      "name": "IdenTIK",
+      "detail": "Research & Development, with Rivest",
+      "result": "1st place",
+      "scope": "National"
+    },
+    {
+      "year": "2020",
+      "name": "Medion Innovation Competition",
+      "detail": "IoT category, with MooID",
+      "result": "1st place",
+      "scope": "National"
+    }
+  ]
+}

@@ -28,8 +28,23 @@
     font-size: 0.8125rem;
   }
   :root .workspace-stats > div {
-    padding-right: 24px;
-    margin-right: 24px;
+    padding: 22px 20px;
+  }
+  :root .workspace-stats > div:first-child {
+    padding-left: 0;
+  }
+  :root .workspace-stats strong {
+    font-size: 27px;
+  }
+  :root .timeline-role {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 0 32px;
+  }
+  :root .role-body {
+    padding-left: 28px;
+  }
+  :root .skills-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   :root .about-section {
     gap: 40px;
@@ -76,15 +91,69 @@
   }
   :root .workspace-stats {
     margin-bottom: 52px;
-    flex-wrap: wrap;
-    row-gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  :root .workspace-stats > div {
-    padding-right: 20px;
-    margin-right: 20px;
+  :root .workspace-stats > div:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
   }
-  :root .workspace-stats > p {
+  :root .workspace-stats > div:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+  :root .focus-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 44px;
+  }
+  :root .focus-card {
+    padding: 18px;
+  }
+  :root .focus-card-top {
+    margin-bottom: 14px;
+  }
+  :root .timeline-role {
+    grid-template-columns: 1fr;
+    position: relative;
+    border-left: 1px solid var(--border);
+    padding: 0 0 40px 24px;
+  }
+  :root .timeline-role:last-child {
+    padding-bottom: 0;
+  }
+  :root .role-meta {
+    position: relative;
+    top: auto;
+    padding-bottom: 16px;
+  }
+  :root .role-meta::before {
+    display: block;
+    left: -29px;
+    top: 3px;
+  }
+  :root .role-body {
+    border-left: 0;
+    padding: 0;
+  }
+  :root .role-body::before {
     display: none;
+  }
+  :root .role-meta h3 {
+    font-size: 22px;
+    margin-top: 8px;
+  }
+  :root .role-title {
+    margin-top: 5px;
+  }
+  :root .engagement {
+    padding: 18px;
+  }
+  :root .projects-section,
+  :root .skills-section,
+  :root .recognition-section {
+    margin-top: 57px;
+  }
+  :root .recognition-grid {
+    grid-template-columns: 1fr;
   }
   :root .section-heading h2 {
     font-size: 27px;
@@ -307,33 +376,63 @@
   :root .workbench-bottom {
     font-size: 0.75rem;
   }
+  :root .hero-copy > .hero-role {
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+  :root .hero-role > span {
+    font-size: 1rem;
+  }
   :root .workspace-stats {
-    padding: 19px 0;
     margin-bottom: 43px;
-    justify-content: space-between;
   }
   :root .workspace-stats > div {
-    gap: 9px;
-    flex-direction: column;
-    align-items: flex-start;
-    padding-right: 19px;
-    margin-right: 0;
-    flex: 1;
-  }
-  :root .workspace-stats > div:nth-child(3) {
-    border-right: 0;
-    padding-right: 0;
-    padding-left: 15px;
-  }
-  :root .workspace-stats > div:nth-child(2) {
-    padding-left: 15px;
+    gap: 6px;
+    padding: 18px 0 18px 16px;
   }
   :root .workspace-stats strong {
-    font-size: 28px;
+    font-size: 25px;
   }
   :root .workspace-stats > div > span {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     max-width: 100%;
+  }
+  :root .engagement {
+    padding: 16px;
+  }
+  :root .engagement-head h4 {
+    font-size: 1.0625rem;
+  }
+  :root .engagement li {
+    font-size: 0.875rem;
+  }
+  :root .role-focus {
+    font-size: 0.9375rem;
+  }
+  :root .skills-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  :root .award-list {
+    padding: 0 16px;
+  }
+  :root .award-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: start;
+    padding: 16px 0;
+  }
+  :root .award-year {
+    padding-top: 2px;
+  }
+  :root .award-result {
+    grid-column: 2;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  :root .education-card {
+    padding: 20px;
   }
   :root .section-heading {
     flex-wrap: wrap;
@@ -474,14 +573,9 @@
   :root .source-note {
     font-size: 0.75rem;
   }
-  :root .about-interests {
-    font-size: 0.75rem;
-  }
-  :root .about-links {
-    gap: 19px;
-  }
-  :root .about-links > a {
-    font-size: 0.8125rem;
+  :root .contact-list strong,
+  :root .strengths p {
+    font-size: 0.875rem;
   }
   :root .site-footer > div {
     padding: 20px;
