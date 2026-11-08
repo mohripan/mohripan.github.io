@@ -25,6 +25,31 @@ export function progressLabel(project: Project) {
     none: "No tracked tasks yet",
   }[project.progress.source];
 }
+export function sortedMilestones(project: Project) {
+  const number = (title: string) => Number(/\d+/.exec(title)?.[0] || 0);
+  return [...project.milestones].sort(
+    (a, b) => number(a.title) - number(b.title),
+  );
+}
+// A short preview shows where the work is now: the newest started item, a little
+// of what came before it, and what comes next. Long-running projects otherwise
+// open on their oldest history.
+export function focusWindow<T>(
+  items: T[],
+  limit: number,
+  started: (item: T) => boolean,
+) {
+  if (items.length <= limit) return items;
+  let latest = -1;
+  items.forEach((item, index) => {
+    if (started(item)) latest = index;
+  });
+  const start = Math.max(
+    0,
+    Math.min(latest - Math.floor(limit / 3), items.length - limit),
+  );
+  return items.slice(start, start + limit);
+}
 export function shortMilestone(title: string) {
   return title
     .replace(/^Milestone\s+\d+\s*:\s*/i, "")

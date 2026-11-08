@@ -12,7 +12,7 @@ Page order: hero (name, role, awards, and the featured build on the workbench), 
 
 `data/profile.json` holds identity, introduction, and contact details. `data/resume.json` holds the experience, skills, strengths, education, and awards. `data/projects.json` accepts bare GitHub repository links or objects with display overrides. `scripts/sync-github.ts` reads public repository metadata, README, all GitHub milestones and issues, twelve recent commits, twelve recent pull requests, and an optional roadmap file. It writes `src/data/github.json` atomically after the whole sync succeeds. Only public repositories are eligible, including when a local token has private access.
 
-Progress uses milestone issue completion first, then roadmap checklist completion, then issue closure. No tracked work means no percentage. Every measure names its source; no whole-product completion is inferred. Pull requests are activity, not issues, and automated entries are labeled. Capsulet remains valuable through README and commit/PR activity even without milestones. Harmonix uses a maintained fallback because its README is title-only.
+Progress uses milestone issue completion first, then roadmap checklist completion, then issue closure. No tracked work means no percentage. Every measure names its source; no whole-product completion is inferred. Pull requests are activity, not issues, and automated entries are labeled. Roadmap previews center on the newest started milestone. Harmonix uses a maintained fallback because its README is title-only.
 
 ## Hosting and validation
 

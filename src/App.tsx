@@ -8,6 +8,7 @@ import {
   CircleDashed,
   ChevronDown,
   GitPullRequest,
+  Globe,
   Mail,
   MessageCircle,
   Milestone,
@@ -22,9 +23,11 @@ import rawSnapshot from "./data/github.json";
 import type { Project, Snapshot } from "./types";
 import {
   dateLabel,
+  focusWindow,
   progressLabel,
   relativeDate,
   shortMilestone,
+  sortedMilestones,
 } from "./format";
 import ProjectDiagram from "./ProjectDiagram";
 import ActivityFeed from "./ActivityFeed";
@@ -71,7 +74,11 @@ export default function App() {
   );
   const featured =
     projects.find((project) => project.milestones.length) || projects[0];
-  const activeMilestones = featured.milestones
+  const activeMilestones = focusWindow(
+    sortedMilestones(featured),
+    6,
+    (milestone) => milestone.closed > 0 || milestone.state === "closed",
+  )
     .filter((milestone) => milestone.state === "open" && milestone.open > 0)
     .slice(0, 3);
   const openProject = (project: Project, tab = "overview") =>
@@ -208,7 +215,20 @@ export default function App() {
                 <span className="mono-label">Featured build</span>
                 <h2>{featured.name}</h2>
               </div>
-              <span className="workbench-tag">{featured.language}</span>
+              {featured.liveUrl ? (
+                <a
+                  className="workbench-tag workbench-live"
+                  href={featured.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span className="status-dot" />
+                  {new URL(featured.liveUrl).host}
+                  <ArrowUpRight size={12} />
+                </a>
+              ) : (
+                <span className="workbench-tag">{featured.language}</span>
+              )}
             </div>
             <ProjectDiagram project={featured} />
             <div className="workbench-tasks">
@@ -346,15 +366,30 @@ export default function App() {
                         {project.name}
                       </button>
                     </h3>
-                    <a
-                      className="repo-link"
-                      href={project.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`${project.name} on GitHub`}
-                    >
-                      <Github size={18} />
-                    </a>
+                    <span className="project-links">
+                      {project.liveUrl && (
+                        <a
+                          className="repo-link"
+                          href={project.liveUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${project.name} live site`}
+                          title="Live site"
+                        >
+                          <Globe size={18} />
+                        </a>
+                      )}
+                      <a
+                        className="repo-link"
+                        href={project.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${project.name} on GitHub`}
+                        title="Repository"
+                      >
+                        <Github size={18} />
+                      </a>
+                    </span>
                   </div>
                   <p>{project.summary}</p>
                   <div className="tags">

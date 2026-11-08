@@ -7,6 +7,7 @@ export type ProjectConfig = {
   roadmapPath?: string;
   fallbackAbout?: string;
   status?: string;
+  liveUrl?: string;
   enabled?: boolean;
 };
 
@@ -39,6 +40,7 @@ export type Project = {
   name: string;
   repo: string;
   url: string;
+  liveUrl: string | null;
   category: string;
   summary: string;
   tags: string[];

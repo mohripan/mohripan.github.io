@@ -5,6 +5,7 @@ import {
   repositoryFromUrl,
   roadmapTasks,
   calculateProgress,
+  liveSiteUrl,
 } from "./github.ts";
 import type { Activity, Milestone, Project, Snapshot } from "../src/types.ts";
 
@@ -67,6 +68,7 @@ type Repository = {
   name: string;
   full_name: string;
   description: string | null;
+  homepage: string | null;
   html_url: string;
   default_branch: string;
   language: string | null;
@@ -102,6 +104,15 @@ type Pull = {
 };
 const decode = (file: FileContent | null) =>
   file ? Buffer.from(file.content, "base64").toString("utf8") : null;
+// The configured site wins; otherwise use the repository's homepage when it is a usable https link.
+function siteFor(configured: string | undefined, homepage: string | null) {
+  if (configured) return liveSiteUrl(configured);
+  try {
+    return homepage ? liveSiteUrl(homepage) : null;
+  } catch {
+    return null;
+  }
+}
 
 async function main() {
   const configs = parseConfig(
@@ -183,6 +194,7 @@ async function main() {
       name,
       repo: metadata.full_name,
       url: metadata.html_url,
+      liveUrl: siteFor(config.liveUrl, metadata.homepage),
       category: config.category || "Projects",
       summary:
         config.summary ||

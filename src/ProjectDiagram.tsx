@@ -1,11 +1,14 @@
 import {
+  Bot,
   Box,
   Braces,
   Database,
-  FileText,
-  GitBranch,
+  FileCheck2,
+  Gamepad2,
+  Image,
   Layers,
   Network,
+  PenLine,
   Play,
   ShieldCheck,
   Sparkles,
@@ -14,7 +17,7 @@ import type { Project } from "./types";
 
 export default function ProjectDiagram({ project }: { project: Project }) {
   const type = project.repo.endsWith("flint-graph")
-    ? "graph"
+    ? "studio"
     : project.repo.endsWith("capsulet")
       ? "capsule"
       : project.repo.endsWith("workflow-automations")
@@ -23,20 +26,20 @@ export default function ProjectDiagram({ project }: { project: Project }) {
           ? "training"
           : "unity";
   const icons =
-    type === "graph"
-      ? [FileText, Network, Sparkles]
+    type === "studio"
+      ? [PenLine, Image, Gamepad2]
       : type === "capsule"
-        ? [GitBranch, ShieldCheck, Box]
+        ? [Bot, ShieldCheck, FileCheck2]
         : type === "flow"
           ? [Braces, Database, Play]
           : type === "training"
             ? [Layers, Network, Play]
             : [Box, Layers, Sparkles];
   const labels =
-    type === "graph"
-      ? ["ingest", "connect", "retrieve"]
+    type === "studio"
+      ? ["write", "generate", "ship"]
       : type === "capsule"
-        ? ["define", "validate", "execute"]
+        ? ["propose", "check", "certify"]
         : type === "flow"
           ? ["trigger", "dispatch", "run"]
           : type === "training"
@@ -60,10 +63,10 @@ export default function ProjectDiagram({ project }: { project: Project }) {
         </div>
       ))}
       <span className="diagram-caption">
-        {type === "graph"
-          ? "source → knowledge → answers"
+        {type === "studio"
+          ? "story → art & voices → Godot game"
           : type === "capsule"
-            ? "correctness at every step"
+            ? "model proposes, kernel decides"
             : type === "flow"
               ? "events → distributed execution"
               : type === "training"

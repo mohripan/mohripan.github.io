@@ -6,8 +6,14 @@ import {
   GitPullRequest,
   Milestone as MilestoneIcon,
 } from "lucide-react";
-import type { Project } from "./types";
-import { dateLabel, progressLabel, shortMilestone } from "./format";
+import type { Milestone, Project, Task } from "./types";
+import {
+  dateLabel,
+  focusWindow,
+  progressLabel,
+  shortMilestone,
+  sortedMilestones,
+} from "./format";
 
 export default function Roadmap({
   project,
@@ -18,12 +24,17 @@ export default function Roadmap({
   limit?: number;
   onActivity?: () => void;
 }) {
-  const milestones = [...project.milestones].sort((a, b) => {
-    const number = (title: string) => Number(/\d+/.exec(title)?.[0] || 0);
-    return number(a.title) - number(b.title);
-  });
-  const items = milestones.length ? milestones : project.tasks;
-  const shown = limit ? items.slice(0, limit) : items;
+  const milestones = sortedMilestones(project);
+  const items: (Milestone | Task)[] = milestones.length
+    ? milestones
+    : project.tasks;
+  const shown = limit
+    ? focusWindow(items, limit, (item) =>
+        "open" in item
+          ? item.closed > 0 || item.state === "closed"
+          : item.state !== "todo",
+      )
+    : items;
   return (
     <div className="roadmap-content">
       {project.progress.percent !== null && (

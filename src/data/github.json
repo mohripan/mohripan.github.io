@@ -1,24 +1,25 @@
 {
-  "syncedAt": "2026-10-17T05:05:49.825Z",
+  "syncedAt": "2026-11-08T06:19:42.668Z",
   "projects": [
     {
       "id": "mohripan-flint-graph",
       "name": "FlintGraph",
       "repo": "mohripan/flint-graph",
       "url": "https://github.com/mohripan/flint-graph",
+      "liveUrl": "https://flintgraph.digital/",
       "category": "AI systems",
-      "summary": "From source documents to a knowledge graph. A GraphRAG platform with traceable, citation-bearing answers.",
+      "summary": "An AI-assisted studio for branching visual novels. Write with an assistant, generate reviewed art and voices, and ship a Godot game.",
       "tags": [
         "Python",
-        "GraphRAG",
-        "Temporal"
+        "Generative AI",
+        "Godot"
       ],
       "language": "Python",
-      "status": "Open source",
+      "status": "Live preview",
       "branch": "master",
       "stars": 1,
-      "pushedAt": "2026-10-11T06:41:27Z",
-      "readme": "# FlintGraph\n\nA production-oriented GraphRAG platform. The current implementation provides the ingestion control plane, a Temporal-backed content pipeline that materializes source bytes, parses supported formats, chunks content, records lineage, persists provenance-rich extraction proposals, builds a resolved knowledge graph with reviewable, reversible merges, maintains rebuildable retrieval indexes, exposes LangGraph-backed query orchestration with streamed, faithfulness-checked, citation-bearing answers and provenance APIs, includes real-model defaults plus an offline evaluation quality gate, adds an OIDC-backed workspace access boundary for MVP use, and hardens the public API boundary for controlled deployments. PostgreSQL is the system of record; Neo4j and OpenSearch are idempotent projections.\n\nSee the [roadmap](docs/ROADMAP.md) for useful-answer reliability, embeddings,\nagent strategies, whole-corpus CAG, delegated research, production delivery,\nand the platform/developer-experience tracks (Milestones 24–26).\n\nUse the [explicit developer profiles](docs/runbooks/developer-profiles.md) for\ndeterministic offline-model setup or installed local-real models with reviewed\nSHA-256 fingerprints. Guarded bootstrap preserves existing indexes; tiny-corpus\ningestion is opt-in and repeatable. Use the [financial corpus runbook](docs/runbooks/financial-corpus.md)\nfor pinned public report excerpts with separately held answer annotations.\nFresh nightly user-question testing is tracked in #53.\n\n## Why these milestones come first\n\nThe early milestones establish durable identities, tenant boundaries, version semantics, idempotency, inspectable job state, a safe asynchronous dispatch path, canonical graph mutation, retrieval primitives, and query-time orchestration. LangGraph orchestrates query execution; it does not replace the ingestion or indexing control planes.\n\n## Requirements\n\n- Docker with Compose, or PostgreSQL 17+\n- `uv`\n- Python 3.12\n- Node.js 20.19+ or 22.12+ for the frontend\n\n## Run locally with Docker\n\n```bash\ndocker compose up --build\n```\n\nThen open:\n\n- API documentation: `http://localhost:8000/docs`\n- Frontend: run `cd frontend && npm run dev`, then open `http://localhost:5173`\n- MinIO console: `http://localhost:9001`\n- Grafana: `http://localhost:3000`\n- Temporal Web UI: `http://localhost:8233`\n- Neo4j browser: `http://localhost:7474`\n- Liveness: `http://localhost:8000/health/live`\n- Readiness: `http://localhost:8000/health/ready`\n\n## Run locally without containerizing the API\n\n```bash\ncp .env.example .env\nuv sync --all-groups\nuv run alembic upgrade head\nuv run uvicorn flint_graph.main:app --reload\n```\n\nIn another shell, run Temporal locally and then start the outbox relay:\n\n```bash\ntemporal server start-dev\nmake relay\nmake worker\n```\n\n## Authentication and workspaces\n\nFor read-only setup diagnostics, run `uv run flint-graph-doctor --offline`, or\n`uv run flint-graph-doctor --workspace-id YOUR-WORKSPACE-UUID` against a running\nlocal API. The [doctor runbook](docs/runbooks/developer-doctor.md) covers OIDC,\nJSON output, missing models, embedding/index mismatches and exit codes. Doctor\ndoes not download models, run inference or change setup.\n\nLocal development defaults to `FLINT_GRAPH_AUTH_MODE=dev`, which creates a fixed\ndevelopment user automatically. This preserves the simple curl examples below\nwithout an `Authorization` header.\n\nFor Keycloak or another OIDC provider, configure the API with:\n\n```powershell\n$env:FLINT_GRAPH_AUTH_MODE = \"oidc\"\n$env:FLINT_GRAPH_OIDC_ISSUER = \"http://localhost:8080/realms/flintgraph\"\n$env:FLINT_GRAPH_OIDC_AUDIENCE = \"flintgraph-api\"\n```\n\nIn staging and production, `auth_mode=dev` is rejected unless\n`FLINT_GRAPH_ALLOW_UNSAFE_DEV_AUTH=true` is explicitly set.\n\n## Deployment hardening\n\nStaging and production require explicit public exposure settings before the API\nwill start:\n\n```powershell\n$env:FLINT_GRAPH_PUBLIC_BASE_URL = \"https://api.example.com\"\n$env:FLINT_GRAPH_ALLOWED_ORIGINS = \"https://app.example.com\"\n$env:FLINT_GRAPH_TRUSTED_HOSTS = \"api.example.com\"\n$env:FLINT_GRAPH_REQUIRE_TLS = \"true\"\n$env:FLINT_GRAPH_RATE_LIMIT_ENABLED = \"true\"\n```\n\nUploads and URL intake are bounded by `FLINT_GRAPH_MAX_UPLOAD_BYTES` and\n`FLINT_GRAPH_MAX_URL_INTAKE_BYTES`. URL intake blocks private and local network\ntargets outside local development unless `FLINT_GRAPH_ALLOW_PRIVATE_URL_INTAKE`\nis explicitly enabled. See `.env.production.example` and\n`docs/runbooks/deployment-hardening.md`.\n\nThe frontend OIDC settings are:\n\n```powershell\n$env:VITE_FLINT_GRAPH_AUTH_MODE = \"oidc\"\n$env:VITE_FLINT_GRAPH_OIDC_AUTHORITY = \"http://localhost:8080/realms/flintgraph\"\n$env:VITE_FLINT_GRAPH_OIDC_CLIENT_ID = \"flintgraph-frontend\"\n```\n\nWorkspace APIs:\n\n```bash\ncurl -sS -X POST http://localhost:8000/v1/workspaces \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"name\":\"Acme Research\"}'\n\ncurl -sS http://localhost:8000/v1/workspaces\n```\n\n## Observability, audit, and usage\n\n`docker compose up -d` already runs an OTLP receiver plus Grafana on\n<http://localhost:3000>. The API and the durable processes (ingestion worker,\noutbox relay, projection cleanup) all export traces there, so one upload produces\none trace spanning the API request, the outbox publish, and the Temporal\nactivities.\n\n```powershell\n# Dependency-aware readiness: 503 names the dependency that is down.\ncurl -sS http://localhost:8000/health/ready\n\n# Who did what in a workspace (admin/owner).\ncurl -sS \"http://localhost:8000/v1/audit-events?limit=20\" -H \"X-Tenant-ID: $TENANT\"\n\n# What the model providers consumed (admin/owner).\ncurl -sS \"http://localhost:8000/v1/usage?group_by=model\" -H \"X-Tenant-ID: $TENANT\"\n```\n\nTo rehearse a pull-based metrics deployment:\n\n```powershell\n$env:FLINT_GRAPH_METRICS_ENABLED = \"true\"\n$env:FLINT_GRAPH_METRICS_TOKEN = \"local-scrape-token\"\ndocker compose --profile metrics up -d\n# Prometheus: http://127.0.0.1:9090; Alertmanager: http://127.0.0.1:9093\n# The default Alertmanager receiver sends nothing.\n```\n\nCost requires pricing configuration; unpriced calls are recorded with a null cost\nrather than a guessed one:\n\n```powershell\n$env:FLINT_GRAPH_USAGE_PRICING = '{\"anthropic:claude-opus-4-8\":{\"input_per_million\":15.0,\"output_per_million\":75.0}}'\n```\n\nGrafana automatically provisions the [operations dashboard](http://localhost:3000/d/flint-graph-operations)\nagainst LGTM's all-process metrics. The optional standalone scrape profile above\nreads the API only. [Local Phoenix and trace fan-out](docs/runbooks/ai-observability.md)\nadds AI trace inspection without model calls or changing provider defaults;\nemail delivery, ELK/log pipeline selection and vLLM qualification remain tracked\nissues, not completed production features.\n\nLogs redact prompts, answers, and document text by default.\n`FLINT_GRAPH_LOG_PAYLOADS=true` exists for local prompt debugging only and is\nrejected in staging and production. See\n`docs/runbooks/operations-observability.md` and\n`docs/architecture/observability-contract.md`.\n\n## Exercise the vertical slice\n\nCreate a workspace:\n\n```bash\ncurl -sS -X POST http://localhost:8000/v1/workspaces \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"name\":\"Acme Research\"}'\n```\n\nUse the returned workspace ID as `X-Tenant-ID` to upload source material:\n\n```bash\ncurl -sS -X POST http://localhost:8000/v1/documents/uploads \\\n  -H 'X-Tenant-ID: <tenant-id>' \\\n  -H 'Idempotency-Key: upload-note-001' \\\n  -F 'title=Uploaded Note' \\\n  -F 'external_id=uploaded-note-001' \\\n  -F 'file=@note.md;type=text/markdown'\n```\n\nOr materialize a URL:\n\n```bash\ncurl -sS -X POST http://localhost:8000/v1/documents/from-url \\\n  -H 'Content-Type: application/json' \\\n  -H 'X-Tenant-ID: <tenant-id>' \\\n  -H 'Idempotency-Key: url-note-001' \\\n  -d '{\"title\":\"Example Page\",\"source_url\":\"https://example.org/\",\"external_id\":\"example-page\"}'\n```\n\nBoth intake endpoints create the document, document version, ingestion job, and outbox message in one durable path. Repeating the same request with the same idempotency key returns the same document/version/job with HTTP 200 rather than creating another version.\n\nWith the relay and worker running, the job should move from `queued` to `running` to `completed`. The worker verifies the raw object hash, runs the bounded parser, writes normalized and chunk artifacts, persists queryable chunk lineage, runs provider-neutral proposal extraction, verifies exact evidence quotes, persists extraction runs and staged records, and activates the document version. If Ollama is unavailable in default optional extraction mode, extraction provenance records the failure and the job can still complete.\n\nFetch a job:\n\n```bash\ncurl -sS http://localhost:8000/v1/ingestion-jobs/<job-id> \\\n  -H 'X-Tenant-ID: <tenant-id>' \\\n```\n\nFetch job events:\n\n```bash\ncurl -sS http://localhost:8000/v1/ingestion-jobs/<job-id>/events \\\n  -H 'X-Tenant-ID: <tenant-id>' \\\n```\n\nCancel a queued or running job:\n\n```bash\ncurl -sS -X POST \\\n  http://localhost:8000/v1/ingestion-jobs/<job-id>/cancel \\\n  -H 'X-Tenant-ID: <tenant-id>'\n```\n\n## Explore the knowledge graph\n\nAfter a document is ingested, per-tenant entity resolution turns staged extracted proposals into canonical entities and relationships, then projects them into Neo4j. Inspect the resolved graph through the API:\n\n```bash\n# Canonical entities (deduplicated across documents; support_count reflects cross-doc support)\ncurl -sS http://localhost:8000/v1/entities -H 'X-Tenant-ID: <tenant-id>'\n\n# One entity with its aliases, mentions, and relationships\ncurl -sS http://localhost:8000/v1/entities/<entity-id> -H 'X-Tenant-ID: <tenant-id>'\n\n# Pending merge-review queue for ambiguous matches\ncurl -sS http://localhost:8000/v1/merge-reviews -H 'X-Tenant-ID: <tenant-id>'\n\n# Resolve a review item (accept attaches to the candidate; reject creates a distinct entity)\ncurl -sS -X POST http://localhost:8000/v1/merge-reviews/<candidate-id>/decision \\\n  -H 'X-Tenant-ID: <tenant-id>' -H 'Content-Type: application/json' \\\n  -d '{\"decision\":\"accept\",\"reason\":\"same company\"}'\n\n# Manual, reversible merge and unmerge\ncurl -sS -X POST http://localhost:8000/v1/entities/<source-id>/merge \\\n  -H 'X-Tenant-ID: <tenant-id>' -H 'Content-Type: application/json' \\\n  -d '{\"target_entity_id\":\"<target-id>\",\"reason\":\"duplicate\"}'\ncurl -sS -X POST http://localhost:8000/v1/entities/<source-id>/unmerge \\\n  -H 'X-Tenant-ID: <tenant-id>' -H 'Content-Type: application/json' -d '{\"reason\":\"was not a duplicate\"}'\n\n# Merge decision audit log\ncurl -sS http://localhost:8000/v1/merge-decisions -H 'X-Tenant-ID: <tenant-id>'\n```\n\nThe resolved graph is visible in the Neo4j browser at `http://localhost:7474`. Small local models such as the default `gemma3:1b` may produce sparse proposals; the pipeline records provider failures or rejected evidence without allowing raw model output to mutate the canonical graph.\n\n## Ask streamed, citation-bearing queries\n\nBefore creating a query run, check workspace search readiness:\n\n```bash\ncurl -sS http://localhost:8000/v1/search-readiness \\\n  -H 'X-Tenant-ID: <tenant-id>'\n```\n\nThe query API rejects requests with HTTP 409 until at least one document version\nhas completed index coverage for the active retrieval index.\n\nCreate a query run:\n\n```bash\ncurl -sS -X POST http://localhost:8000/v1/query-runs \\\n  -H 'X-Tenant-ID: <tenant-id>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"Where is Acme headquartered?\"}'\n```\n\nStream the persisted event sequence and execute a queued run:\n\n```bash\ncurl -N http://localhost:8000/v1/query-runs/<query-run-id>/events/stream \\\n  -H 'X-Tenant-ID: <tenant-id>'\n```\n\nInspect the final run and replay persisted events:\n\n```bash\ncurl -sS http://localhost:8000/v1/query-runs/<query-run-id> \\\n  -H 'X-Tenant-ID: <tenant-id>'\ncurl -sS http://localhost:8000/v1/query-runs/<query-run-id>/events \\\n  -H 'X-Tenant-ID: <tenant-id>'\n```\n\nThe query-run response includes `query_diagnostics`, a compact summary of\nretriever counts, failed retrievers, context packing, support decisions,\nabstention reason, and provider metadata.\n\nInspect answer provenance:\n\n```bash\ncurl -sS http://localhost:8000/v1/query-runs/<query-run-id>/provenance \\\n  -H 'X-Tenant-ID: <tenant-id>'\ncurl -sS http://localhost:8000/v1/query-runs/<query-run-id>/citations/c1 \\\n  -H 'X-Tenant-ID: <tenant-id>'\n```\n\nGrounded answer generation repairs model-emitted citation markers, checks each\nclaim against its cited context, abstains when support is weak, persists\nper-claim support decisions, and streams authoritative final answer events after\nverification.\n\n## Quality commands\n\n```bash\nmake check\n```\n\n`make check` runs lint, typecheck, tests, and the offline deterministic eval gate. On Windows\nPowerShell, the direct commands are usually clearer:\n\n```powershell\nuv run ruff check .\nuv run mypy\nuv run pytest\nuv run flint-graph-eval run --dataset evals/datasets/acme-smoke --evaluations evals/reports/acme-smoke/deterministic-recorded.jsonl --experiment evals/experiments/acme-smoke.yaml --baseline evals/reports/acme-smoke/baselines.json --config-name deterministic\n```\n\nMilestone 09 real-model defaults are env-aware: `FLINT_GRAPH_ENV=test` stays deterministic and\noffline; non-test environments default to real providers unless explicitly overridden. For a\nno-cost local query path, set `FLINT_GRAPH_QUERY_ANSWER_PROVIDER=deterministic`,\n`FLINT_GRAPH_QUERY_SUPPORT_PROVIDER=deterministic`, and `FLINT_GRAPH_EMBEDDING_PROVIDER=deterministic`.\n\nMilestone 10 adds an explicit local Ollama path for no-cost real answers:\n\n```powershell\nollama pull nomic-embed-text\nollama pull llama3.2\n$env:FLINT_GRAPH_EMBEDDING_PROVIDER = \"ollama\"\n$env:FLINT_GRAPH_EMBEDDING_MODEL = \"nomic-embed-text\"\n$env:FLINT_GRAPH_EMBEDDING_DIMENSIONS = \"768\"\n$env:FLINT_GRAPH_QUERY_ANSWER_PROVIDER = \"ollama\"\n$env:FLINT_GRAPH_QUERY_SUPPORT_PROVIDER = \"ollama\"\ndocker compose up --build\n```\n\nSee `docs/runbooks/local-ollama-rag.md` for the retrieval-index/backfill and\ndiscrete-math PDF smoke flow.\n\n## Implemented invariants\n\n1. Every document belongs to exactly one tenant.\n2. Tenant-scoped reads deliberately return 404 for foreign resources.\n3. Every ingestion attempt targets a distinct immutable document version.\n4. Version numbers are allocated while locking the document row.\n5. An idempotency key is unique within a tenant.\n6. The initial `job.queued` transition is written in the same transaction as the job.\n7. New jobs and cancellations write transactional outbox messages before leaving the API transaction.\n8. The outbox relay marks messages published only after Temporal accepts the operation.\n9. Job state changes go through explicit transition rules and append events.\n10. Completed jobs activate their document version.\n11. Failed jobs fail their document version.\n12. Cancelled jobs cancel their document version.\n13. Activating a version supersedes any previous active version for the same document.\n14. Failed or cancelled newer versions do not disturb the current active version.\n15. API errors use `application/problem+json` and include a request ID.\n16. Upload and URL intake materialize immutable raw objects before queuing ingestion.\n17. The worker verifies raw content hashes before parsing.\n18. Normalized, chunk-manifest, and extraction artifacts are stored in object storage.\n19. Queryable chunk lineage is persisted in PostgreSQL.\n20. Optional extraction failure records provenance without blocking version activation.\n21. Required extraction failure records provenance and fails the job/version.\n22. Extraction produces provider-neutral staged proposals with verified evidence spans and queryable run/invocation provenance.\n23. Entity resolution runs one writer per tenant via a PostgreSQL advisory lock.\n24. Resolution applies banded decisions: auto-attach, review queue, or new entity.\n25. Every merge decision is recorded and reviewable; merges are soft and reversible.\n26. Relationships aggregate from resolved staged relations and entity-object claims whose endpoints both resolve to canonical entities.\n27. PostgreSQL is authoritative; Neo4j is an idempotent projection rebuildable from PostgreSQL.\n28. Query runs persist faithfulness summaries and per-claim support decisions.\n29. Every final answer citation maps to a packed context record.\n30. Unsupported answers abstain without fabricating citations.\n31. Query provenance endpoints apply tenant filters.\n32. Test and PR evaluation paths remain offline and deterministic.\n33. Real provider selection without required credentials fails fast.\n34. Evaluation baselines change only through an explicit reviewed update.\n35. Staging and production require explicit public URL, CORS origins, trusted\n    hosts, TLS, OIDC, non-default object-store credentials, and rate limiting.\n36. Oversized request bodies and uploads are rejected before durable intake\n    work is created.\n37. URL intake only fetches HTTP(S) resources and blocks private/local network\n    targets outside local development.\n38. Expensive public endpoints can be rate-limited by user and workspace.\n\n## Current milestone boundary\n\nMilestone 13 added the controlled public API boundary around the Milestone 12\nauthenticated workspace model. The API fails closed in staging and production\nunless deployment exposure settings are explicit, request and intake sizes are\nbounded, URL intake is SSRF-aware, CORS and host validation are configured, TLS\nredirect behavior is enabled, and rate limiting is turned on.\n\nMilestone 14 makes that deployment operable: metrics and traces across every\nprocess including the durable pipeline, dependency-aware readiness, an\nappend-only audit ledger written in the mutation's transaction, and per-workspace\ntoken and cost accounting. Retention for audit and usage rows, distributed rate\nlimiting, and multi-replica scale-out remain open.\n\n## Security status\n\n`X-Tenant-ID` is still a workspace selector, not an identity proof. In OIDC mode\nthe API authorizes that workspace against server-side membership before\ntenant-scoped handlers run. A controlled deployment still needs production\nsecrets, private backing services, a reviewed ingress/proxy configuration,\nbackup/restore practice, and deployment-specific rate-limit scaling decisions.\nSee `docs/architecture/security-boundary.md` and\n`docs/runbooks/deployment-hardening.md`.\n\n## Learning notes\n\nMilestone notes:\n\n- Foundation: `docs/milestones/01-foundation.md`\n- Durable ingestion dispatch: `docs/milestones/02-durable-ingestion-dispatch.md`\n- Content pipeline: `docs/milestones/03-content-pipeline.md`\n- Knowledge graph: `docs/milestones/04-knowledge-graph.md`\n- Provenance-rich extraction: `docs/milestones/05-provenance-rich-extraction.md`\n- Retrieval indexes and backfills: `docs/milestones/06-retrieval-indexes.md`\n- Local dispatch runbook: `docs/runbooks/durable-ingestion-dispatch.md`\n- Content pipeline developer runbook: `docs/runbooks/content-pipeline-developer.md`\n- Content pipeline QA guide: `docs/runbooks/content-pipeline-qa-guide.md`\n- Knowledge graph developer runbook: `docs/runbooks/knowledge-graph-developer.md`\n- Knowledge graph QA guide: `docs/runbooks/knowledge-graph-qa-guide.md`\n- Knowledge graph contract: `docs/architecture/knowledge-graph-contract.md`\n- Extraction proposal contract: `docs/architecture/extraction-proposal-contract.md`\n- Retrieval index contract: `docs/architecture/retrieval-index-contract.md`\n- Retrieval index developer runbook: `docs/runbooks/retrieval-index-developer.md`\n- Retrieval index QA guide: `docs/runbooks/retrieval-index-qa-guide.md`\n- Query orchestration: `docs/milestones/07-query-orchestration.md`\n- Query orchestration contract: `docs/architecture/query-orchestration-contract.md`\n- Query orchestration developer runbook: `docs/runbooks/query-orchestration-developer.md`\n- Query orchestration QA guide: `docs/runbooks/query-orchestration-qa-guide.md`\n- Grounded answer generation: `docs/milestones/08-grounded-answer-generation.md`\n- Answer faithfulness contract: `docs/architecture/answer-faithfulness-contract.md`\n- Grounded answer developer runbook: `docs/runbooks/grounded-answer-generation-developer.md`\n- Grounded answer QA guide: `docs/runbooks/grounded-answer-generation-qa-guide.md`\n- Real models and evaluation: `docs/milestones/09-real-models-and-evaluation.md`\n- Local-first usable RAG: `docs/milestones/10-local-first-usable-rag.md`\n- Document lifecycle correctness: `docs/milestones/11-document-lifecycle-correctness.md`\n- MVP bootstrap and access boundary: `docs/milestones/12-mvp-bootstrap-and-access-boundary.md`\n- Production exposure hardening: `docs/milestones/13-production-exposure-hardening.md`\n- Operational readiness: `docs/milestones/14-operational-readiness.md`\n- Evaluation contract: `docs/architecture/evaluation-contract.md`\n- Real models developer runbook: `docs/runbooks/real-models-developer.md`\n- Evaluation developer runbook: `docs/runbooks/evaluation-developer.md`\n- Evaluation QA guide: `docs/runbooks/evaluation-qa-guide.md`\n- Local Ollama RAG runbook: `docs/runbooks/local-ollama-rag.md`\n- Frontend E2E QA guide: `docs/runbooks/frontend-e2e-qa-guide.md`\n- Deployment hardening runbook: `docs/runbooks/deployment-hardening.md`\n- Backup and restore runbook: `docs/runbooks/backup-restore.md`\n- Operations, observability, audit, and usage runbook: `docs/runbooks/operations-observability.md`\n- Observability contract: `docs/architecture/observability-contract.md`\n",
+      "pushedAt": "2026-11-07T20:02:13Z",
+      "readme": "# FlintGraph\n\nFlintGraph is an AI-assisted visual-novel Studio. Write scenes, build branching\nchoices, stage characters and illustrations, playtest in the browser, and export\nan editable Godot/GDScript game.\n\nThe creator owns the story. The Assistant proposes changes for review; accepting\na proposal creates a revision. Gameplay follows the authored story and needs no\nAI service or FlintGraph account.\n\n![A visual-novel playtest with an illustrated train-carriage scene and dialogue](docs/reports/evidence/scene-art-cgs-2026-10-31/04-playtest.png)\n\n*Play a saved story in the browser, with dialogue over a full-screen event CG.*\n\nThe local Studio, Godot player, browser playtests and release downloads are\nimplemented. The project is under active development; the\n[roadmap](docs/ROADMAP.md#narrative-game-studio) separates\ncompleted work from the next milestones.\n\n## Make a visual novel\n\n| In the Studio | What you can do |\n| --- | --- |\n| Assistant | Describe a scene or character, inspect streamed progress, review proposed edits, and accept them into the story. Image suggestions become jobs when you choose Generate. |\n| Write and Map | Edit scene scripts, dialogue, choices and state; organize scenes in folders; inspect branching routes. |\n| Characters and Assets | Upload art, approve generated candidates, manage backgrounds, sprites, expressions and CGs, and organize the library. |\n| Stage and Look | Place and frame characters, change backgrounds and expressions, show full-screen event CGs under the dialogue, and edit the game's theme. |\n| Voices | Upload line audio or generate it with a configured local model; choose character voices and per-line delivery. Cloned voices require consented references and applicable license acceptance. |\n| Reviewed looks | Lock an approved reference with edited hair, eye and clothing tags; reuse named looks for new requests and save side-by-side character/clothes feedback. Optional clothing-tag comparisons stay advisory. |\n| Poses and training | Generate poses from an approved look, choose seated, standing or walking body guides, repair a selected area, and train private character/style versions from reviewed images. |\n| Playtest and Releases | Test the saved story in the isolated Godot preview, then build and download a web game or editable Godot source. |\n\nThe player supports authored choices and conditions, local saves, voice volume,\nand a CG gallery that unlocks illustrations as they are seen. CGs cover the stage\nwhile dialogue continues; clearing them reveals the background and characters\nunderneath.\n\n![The scene editor with a scene hierarchy, event CG, character placement and dialogue](docs/reports/evidence/scene-art-cgs-2026-10-31/03-stage-event-cg.png)\n\n*Arrange scenes, set the stage and edit the dialogue in one writing desk.*\n\nProjects keep immutable revisions and recoverable edit conflicts. Uploaded and\ngenerated assets record provenance, hashes, approval and rights declarations.\nReleases capture a particular story and its approved assets with versioned build\nmetadata and notices. Private model weights and Studio look metadata stay out of\nthe game.\n\n## Run the narrative Studio\n\nYou need Python 3.12, [uv](https://docs.astral.sh/uv/), Node.js 20.19+ or 22.12+,\nand configured PostgreSQL, MinIO and Temporal services. Docker is used for local\nfixtures and isolated release builds. Browser playtests need the verified Godot\nengine/templates and a prepared preview build. AI workers additionally need their\nseparate model installations; authoring with uploaded assets does not require\nimage or voice generation.\n\nFrom the repository root, in PowerShell:\n\n```powershell\nuv sync --all-groups\nnpm --prefix frontend ci\nCopy-Item tools/narrative/studio.env.example studio.local.env\n```\n\nFill in the new `studio.local.env` using the\n[Studio runbook](docs/runbooks/narrative-studio.md#start-everything). It is private\nand git-ignored; use your own service settings, model pins, prepared preview and\nbuilder paths. The example is a configuration template, not a ready-made model\ninstallation. Skip the copy step if you already have a local configuration.\n\nOnce dependencies and configuration are prepared:\n\n```powershell\nuv run python tools/narrative/studio.py check\nuv run python tools/narrative/studio.py\n```\n\nOpen **http://localhost:5173**. The launcher starts the configured containers,\nwaits for dependencies, applies migrations, and runs the selected API, workers,\nrelay, preview and frontend. It refuses occupied ports or a stale preview build.\nCtrl+C stops the processes it started. `check` can start configured containers to\ncheck dependencies, but does not launch the Studio processes or apply migrations.\n\n`STUDIO_SERVICES` chooses which processes run. For manual authoring without model\nworkers, configure the subset described in the runbook. Ollama powers the local\nAssistant; image and voice inference run in isolated worker environments.\nDownloads, GPU requirements and model/license pins are explicit setup steps.\n\nFor a smaller introduction without the Studio services, follow\n[play the original sample locally](docs/runbooks/narrative-local-play.md), then\n[export and play it in Godot or the browser](docs/runbooks/narrative-web-play.md).\n\n## Models and character consistency\n\nLocal image tools include Animagine XL character/background generation, optional\ntransparent sprite cutouts, face-only expression repainting and reference-guided\nCG generation. Poses use a separately installed FLUX.2 klein 4B editing model.\nVoice choices and their installation/license requirements are documented in the\n[voice runbook](docs/runbooks/narrative-voice-generation.md). Nothing downloads\nmodel weights merely by opening an exported game.\n\nReviewed looks freeze the words used for new portraits and the approved reference\nused for expressions and CGs. A deliberate outfit change gets a new named look.\nYou still review every candidate: image references do not guarantee identity or\nclothing fidelity, especially in two-character CGs. Clothing-tag overlap misses\nfine details and does not determine approval.\n\n![The pose workbench showing an approved character reference, walking skeleton and editable pose description](docs/reports/standing-walking-guides-2026-11-02/studio-walking-desktop.png)\n\n*Use the approved look for appearance and a body guide for pose geometry.*\n\nThe pose workbench supports an additional approved appearance view or a body\nguide, local area repairs, and private character/style LoRA versions trained from\nexplicitly selected, approved images. Character and style versions can be combined\nwithin a bounded strength budget. Training is a local worker job; optional MLflow\ntracking records numeric metrics and hashes. Training images and weights stay out\nof exported games.\n\nOptional per-image tag suggestions help prepare content captions. Review and edit\neach proposal before applying it; manual entry remains available.\n\nCheck anatomy, costume details, linework and lighting before approval. Known\nanatomically flawed images are excluded from training, but guides and trained\nversions do not guarantee a correct result. Automatic calibrated CCIP identity\nscoring, per-character CG scoring and candidate ranking remain unfinished.\n\nSee the [body-guide examples and limits](docs/reports/2026-11-02-standing-and-walking-guides.md),\n[character/style training](docs/reports/2026-11-02-combined-pose-adapters.md) and\n[measurement research](docs/reports/2026-11-01-character-preservation.md).\nThe screenshots above use qualification fixtures documented in the delivery reports.\n\n## Documentation\n\n- [Studio workflow and local setup](docs/runbooks/narrative-studio.md)\n- [Assistant and reviewed proposals](docs/runbooks/narrative-assistant.md)\n- [Image generation, expressions, CGs and reviewed looks](docs/runbooks/narrative-image-generation.md)\n- [Voice generation and model licenses](docs/runbooks/narrative-voice-generation.md)\n- [Godot toolchain](docs/runbooks/godot-toolchain.md) and [player contract](docs/architecture/godot-player-contract.md)\n- [Product direction](docs/product/narrative-game-studio.md), [delivery queue](docs/product/narrative-game-backlog.md) and [roadmap](docs/ROADMAP.md)\n- [Reviewed prompt catalog and Langfuse setup](docs/runbooks/prompt-management.md)\n- [Workspace security](docs/architecture/security-boundary.md) and [deployment hardening](docs/runbooks/deployment-hardening.md)\n\n## Development checks\n\n```powershell\nuv run pytest\nuv run ruff check .\nuv run mypy\n$env:FLINT_GRAPH_ENV = \"test\"\nuv run alembic upgrade head --sql\ndocker compose config\nnpm --prefix frontend test\nnpm --prefix frontend run typecheck\nnpm --prefix frontend run build\n```\n\nDefault tests use deterministic offline model behavior. Real PostgreSQL, Godot,\nbrowser, worker and model qualification have additional fixtures and opt-in\nsettings documented in the relevant runbooks and delivery reports. Shared\nretrieval services have an additional evaluation gate:\n\n```powershell\nuv run flint-graph-eval run --dataset evals/datasets/acme-smoke --evaluations evals/reports/acme-smoke/deterministic-recorded.jsonl --experiment evals/experiments/acme-smoke.yaml --baseline evals/reports/acme-smoke/baselines.json --config-name deterministic\n```\n\n## Shared platform services\n\nFlintGraph includes ingestion, extraction, knowledge graph, retrieval and\ngrounded-answer APIs for document and context workflows.\nPostgreSQL is the system of record; MinIO stores immutable artifacts; Temporal\nhandles durable jobs. Workspace authorization, revision and job boundaries,\nstorage and observability support the Studio and its shared services.\n\n`docker compose up --build` starts the shared-service stack; the Studio uses\nthe launcher above. For document workflows, use the\n[developer profiles](docs/runbooks/developer-profiles.md),\n[local Ollama RAG guide](docs/runbooks/local-ollama-rag.md), and\n[service milestone documentation](docs/milestones/). Operational guidance\ncovers [observability, audit and usage](docs/runbooks/operations-observability.md)\nand [backup/restore](docs/runbooks/backup-restore.md).\n\n`X-Tenant-ID` selects a workspace; OIDC authentication and server-side membership\nauthorize access. Production deployment still requires explicit secrets,\nexposure settings, private backing services and operational qualification. See\nthe security and deployment guides before exposing the API.\n",
       "readmePath": "README.md",
       "fallbackAbout": null,
       "description": null,
@@ -28,8 +29,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #1.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/2",
-          "open": 1,
-          "closed": 18,
+          "open": 0,
+          "closed": 19,
           "due": null
         },
         {
@@ -37,8 +38,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #2.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/3",
-          "open": 3,
-          "closed": 4,
+          "open": 0,
+          "closed": 7,
           "due": null
         },
         {
@@ -46,8 +47,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #3.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/4",
-          "open": 1,
-          "closed": 3,
+          "open": 0,
+          "closed": 4,
           "due": null
         },
         {
@@ -55,8 +56,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #4.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/5",
-          "open": 2,
-          "closed": 0,
+          "open": 1,
+          "closed": 1,
           "due": null
         },
         {
@@ -64,8 +65,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #5.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/6",
-          "open": 1,
-          "closed": 0,
+          "open": 0,
+          "closed": 1,
           "due": null
         },
         {
@@ -73,8 +74,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #6.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/7",
-          "open": 1,
-          "closed": 0,
+          "open": 0,
+          "closed": 1,
           "due": null
         },
         {
@@ -82,8 +83,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #7.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/8",
-          "open": 5,
-          "closed": 2,
+          "open": 0,
+          "closed": 7,
           "due": null
         },
         {
@@ -100,8 +101,8 @@
           "description": "Implementation and acceptance evidence in docs/ROADMAP.md; parent issue #9.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/10",
-          "open": 1,
-          "closed": 4,
+          "open": 0,
+          "closed": 5,
           "due": null
         },
         {
@@ -109,8 +110,8 @@
           "description": "Platform track: Phoenix AI traces, provisioned Grafana, Prometheus/Alertmanager, privacy-safe instrumentation, structured logs and production telemetry. Builds on M14; no email enabled without operator configuration.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/11",
-          "open": 8,
-          "closed": 6,
+          "open": 9,
+          "closed": 8,
           "due": null
         },
         {
@@ -118,8 +119,8 @@
           "description": "Platform track: measured large-corpus retrieval, lifecycle/sharding, optional vLLM serving and comparable quality/throughput tests. Coordinates with M17; keeps local Ollama and avoids throughput claims without hardware/workload evidence.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/12",
-          "open": 8,
-          "closed": 2,
+          "open": 5,
+          "closed": 5,
           "due": null
         },
         {
@@ -127,8 +128,8 @@
           "description": "Developer-experience track: doctor/bootstrap commands, explicit local profiles, observability CI, pinned dependencies and inspectable end-to-end debugging.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/13",
-          "open": 4,
-          "closed": 7,
+          "open": 3,
+          "closed": 9,
           "due": null
         },
         {
@@ -136,8 +137,8 @@
           "description": "In progress: authorized conversation ledger, revalidated bounded prior-year scope, thread UI, queued execution authorization, keyboard/ARIA slice #101 and ordered capture #102 are qualified. Full #73 accessibility/retention, #62 general memory, #74 multi-turn quality, lifecycle and budgets remain open. Coordinate M18/M20/M25; standalone history is not chained memory.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/14",
-          "open": 7,
-          "closed": 7,
+          "open": 6,
+          "closed": 11,
           "due": null
         },
         {
@@ -145,8 +146,8 @@
           "description": "Planning only: PostgreSQL-authoritative, tenant-scoped user-visible research artifacts on existing object storage, capability-gated isolated tool execution, budgets, provenance, retention and security qualification. Coordinate M18/M20/M22; no default arbitrary-code execution.",
           "state": "open",
           "url": "https://github.com/mohripan/flint-graph/milestone/15",
-          "open": 3,
-          "closed": 0,
+          "open": 0,
+          "closed": 3,
           "due": null
         },
         {
@@ -157,126 +158,243 @@
           "open": 2,
           "closed": 3,
           "due": null
+        },
+        {
+          "title": "Milestone 30: portable story runtime and Godot proof",
+          "description": "A versioned portable narrative package, deterministic execution/save semantics, trusted Godot source export and actual engine/browser conformance. Written M30 spec review precedes implementation.\n\nProduct direction: https://github.com/mohripan/flint-graph/blob/master/docs/product/narrative-game-studio.md",
+          "state": "closed",
+          "url": "https://github.com/mohripan/flint-graph/milestone/17",
+          "open": 0,
+          "closed": 6,
+          "due": null
+        },
+        {
+          "title": "Milestone 31: authored narrative game studio",
+          "description": "Project/revision authorization, a manual scene-and-choice editor, shared-runtime browser preview and immutable release downloads. Depends on M30; no AI required for manual creation.\n\nProduct direction: https://github.com/mohripan/flint-graph/blob/master/docs/product/narrative-game-studio.md",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/18",
+          "open": 0,
+          "closed": 4,
+          "due": null
+        },
+        {
+          "title": "Milestone 32: reviewed narrative assistance and continuity",
+          "description": "Project-scoped source/canon and character knowledge, bounded proposal jobs, explicit diff acceptance and dependency-aware continuity revisions. Depends on M31; focused subsystem designs required.\n\nProduct direction: https://github.com/mohripan/flint-graph/blob/master/docs/product/narrative-game-studio.md",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/19",
+          "open": 5,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 33: controlled game asset production",
+          "description": "Project-scoped art library, reviewed references, bounded image jobs, asset approval/provenance and release bindings. Depends on M31; uploaded art works without an image model.\n\nProduct direction: https://github.com/mohripan/flint-graph/blob/master/docs/product/narrative-game-studio.md",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/20",
+          "open": 4,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 34: narrative game release qualification",
+          "description": "An original complete game with three reachable endings, measured 15–30 minute human playtest, live browser/Godot proof, nightly route gates and recovery/security/performance evidence. Depends on M31–33.\n\nProduct direction: https://github.com/mohripan/flint-graph/blob/master/docs/product/narrative-game-studio.md",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/21",
+          "open": 4,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 35: versioned prompt management with Langfuse",
+          "description": "Prompts become managed, versioned, evaluated artifacts: authored and promoted with labels in self-hosted Langfuse, a committed prompt lock for offline and outage reproducibility, eval-gated promotion and exact prompt identity on every model call. Runtime never blocks on Langfuse. Coordinates #79 and M32. Tracking issue #133.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/22",
+          "open": 4,
+          "closed": 4,
+          "due": null
+        },
+        {
+          "title": "Milestone 36: context engineering and token budgets",
+          "description": "Every model call assembles context from an explicit, measured budget: provider-accurate token counts, reserved slices for instructions, history, memory, evidence, tools and output, provider prompt caching for stable prefixes, and an inspectable per-call context manifest. Serves M27 and M32; coordinates #82, #83 and #63. Tracking issue #141.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/23",
+          "open": 6,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 37: durable memory with user controls",
+          "description": "Governed memory beyond the current turn: the conversation memory policy selected in #75, opt-in user/workspace/project memory with review and erase controls, narrative context from accepted canon with per-character knowledge views, and poisoning/leakage qualification. PostgreSQL-authoritative; remembered content is never evidence. Tracking issue #151.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/24",
+          "open": 5,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 38: visual novel characters, backgrounds and staging",
+          "description": "Visual novel presentation beyond v1's single portrait and background: layered 2D character sprites with expressions and outfits built in a studio character creator, multi-character staging, backgrounds with variants and a CG gallery, transitions, audio, a themed player UI and standard VN controls. Deterministic, save-safe and identical across browser preview and Godot export. Depends on M31 and #128. Tracking issue #156.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/25",
+          "open": 11,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 39: expressive and cloned character voices",
+          "description": "Characters speak in a creator's own or a consenting speaker's voice from a short reference, and lines can be delivered angry, sad, whispered or dramatic. Local and offline; generated clips stay reviewed candidates; reference audio never ships. Builds on ADR 0043 (line voices, Kokoro worker). Tracking issue #173.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/26",
+          "open": 0,
+          "closed": 6,
+          "due": null
+        },
+        {
+          "title": "Milestone 40: consistent characters across poses, outfits and scenes",
+          "description": "A character generated once keeps the same face, hair and clothes in later poses, expressions and CGs. Research CCIP identity and outfit scores (deepghs ccip/imgutils), locked looks, local LoRA fine-tuning, richer references and context, and pose methods on a shared bench, then build the winners in. Local and offline. Tracking issue #179.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/27",
+          "open": 8,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 41: coordinated GPU resources and multi-node production path",
+          "description": "Coordinate image, audio and local LLM admission on native Windows using NVML, a custom host-local GPU broker and existing Temporal/Ollama. Measure dedicated VRAM, preserve external ownership, qualify fenced leases/fairness/recovery, and expose useful queue state. Production is Linux on multiple IaaS nodes with Kubernetes; cloud vs on-premises remains undecided. Define the node-placement/routing/admission contract without making Kubernetes a local prerequisite. Ray and Linux MPS/MIG remain optional evidence-based follow-ups, not defaults. Planning only; live hardware/cluster qualification and rollout gates are explicit. Tracking issue #187.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/28",
+          "open": 8,
+          "closed": 0,
+          "due": null
+        },
+        {
+          "title": "Milestone 42: AWS deployment with a GPU that sleeps when idle",
+          "description": "First cloud stage: an always-on CPU tier and one GPU instance that starts when generation is queued and stops itself after an idle period, so GPU time is paid only while generating. Precedes the multi-node Kubernetes path in M41 (#194). Tracking issue #195.",
+          "state": "open",
+          "url": "https://github.com/mohripan/flint-graph/milestone/29",
+          "open": 8,
+          "closed": 0,
+          "due": null
         }
       ],
       "tasks": [],
       "roadmapUrl": "https://github.com/mohripan/flint-graph/blob/master/docs/ROADMAP.md",
       "issues": {
-        "open": 48,
-        "closed": 59
+        "open": 93,
+        "closed": 109
       },
       "progress": {
         "source": "milestones",
-        "closed": 59,
-        "total": 107,
-        "percent": 55
+        "closed": 107,
+        "total": 197,
+        "percent": 54
       },
       "activity": [
         {
-          "id": "b90fabb0344ef41486e51d6f5a153737c7332798",
+          "id": "1bb7a22300039fbb9de1984f27357af47a6f3ca8",
           "kind": "commit",
-          "title": "feat(observability): add bounded opt-in Jaeger v2 local backend",
-          "url": "https://github.com/mohripan/flint-graph/commit/b90fabb0344ef41486e51d6f5a153737c7332798",
-          "date": "2026-10-11T06:41:25Z",
+          "title": "docs: the Runpod bill once all its charges had arrived",
+          "url": "https://github.com/mohripan/flint-graph/commit/1bb7a22300039fbb9de1984f27357af47a6f3ca8",
+          "date": "2026-11-07T20:02:10Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "038de1628e3a067c05ffc2d3e39b5f00fc02e65c",
+          "id": "07fd082050de4bf86cde9836d86d58d6d0bbc51b",
           "kind": "commit",
-          "title": "fix(intake): pin validated DNS addresses and bound the whole fetch",
-          "url": "https://github.com/mohripan/flint-graph/commit/038de1628e3a067c05ffc2d3e39b5f00fc02e65c",
-          "date": "2026-10-11T06:25:44Z",
+          "title": "docs: what the models on Runpod did on the live site, and what they cost",
+          "url": "https://github.com/mohripan/flint-graph/commit/07fd082050de4bf86cde9836d86d58d6d0bbc51b",
+          "date": "2026-11-07T17:51:06Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "bf40b6510693a13d7686180e5cbb73773f62cbfd",
+          "id": "62ce0955d55e04d79fda9853f0a8f2025dde437c",
           "kind": "commit",
-          "title": "fix(intake): reject credential-bearing original and redirect URLs",
-          "url": "https://github.com/mohripan/flint-graph/commit/bf40b6510693a13d7686180e5cbb73773f62cbfd",
-          "date": "2026-10-11T06:10:16Z",
+          "title": "deploy: the frontend that restarts a stalled playtest, and today's real costs",
+          "url": "https://github.com/mohripan/flint-graph/commit/62ce0955d55e04d79fda9853f0a8f2025dde437c",
+          "date": "2026-11-07T17:38:49Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "8f3d9c2bab5adb22753cbcc8002e97482b7e858b",
+          "id": "dbc4201e79f79ed3794d40a801c292d3b5fce88e",
           "kind": "commit",
-          "title": "docs(security): define agent threat model and approval boundaries",
-          "url": "https://github.com/mohripan/flint-graph/commit/8f3d9c2bab5adb22753cbcc8002e97482b7e858b",
-          "date": "2026-10-11T06:01:43Z",
+          "title": "fix(playtest): start the player again when its download stalls",
+          "url": "https://github.com/mohripan/flint-graph/commit/dbc4201e79f79ed3794d40a801c292d3b5fce88e",
+          "date": "2026-11-07T17:36:55Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "b662072faacdb096ad09ebb95deae9593aa7c6ce",
+          "id": "4ab6f9a9ae45b73efb8caffbd6b9c9f88875ee52",
           "kind": "commit",
-          "title": "feat(evals): capture bounded ordered conversations through public API",
-          "url": "https://github.com/mohripan/flint-graph/commit/b662072faacdb096ad09ebb95deae9593aa7c6ce",
-          "date": "2026-10-11T05:52:19Z",
+          "title": "chore(deploy): roll out the picture-card fallback",
+          "url": "https://github.com/mohripan/flint-graph/commit/4ab6f9a9ae45b73efb8caffbd6b9c9f88875ee52",
+          "date": "2026-11-07T16:59:56Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "f9a34da94a7272a54e07cc5194691e7998aeaf6a",
+          "id": "35d315de03912b8fe849ddcdb47c01dedbb628cd",
           "kind": "commit",
-          "title": "fix: qualify conversation keyboard navigation",
-          "url": "https://github.com/mohripan/flint-graph/commit/f9a34da94a7272a54e07cc5194691e7998aeaf6a",
-          "date": "2026-10-10T18:07:57Z",
+          "title": "fix(assistant): a scene with no picture ends in the picture card, not a dead end",
+          "url": "https://github.com/mohripan/flint-graph/commit/35d315de03912b8fe849ddcdb47c01dedbb628cd",
+          "date": "2026-11-07T16:57:49Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "c8006b35b7ead90abd4dea2d2b6ee0a0c7c7e204",
+          "id": "9b1b4d969433b13e16e1d92cc4e5e1d2bbc6a4cd",
           "kind": "commit",
-          "title": "fix: authorize queued conversation stream execution",
-          "url": "https://github.com/mohripan/flint-graph/commit/c8006b35b7ead90abd4dea2d2b6ee0a0c7c7e204",
-          "date": "2026-10-10T17:47:06Z",
+          "title": "chore(deploy): roll out the first-image and scene rules",
+          "url": "https://github.com/mohripan/flint-graph/commit/9b1b4d969433b13e16e1d92cc4e5e1d2bbc6a4cd",
+          "date": "2026-11-07T16:44:43Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "4bdd96b2675c4b174b4d1a26da101f7f278bdf09",
+          "id": "a819bc6d1896101eb534864fc0c5dfb945a5861b",
           "kind": "commit",
-          "title": "feat(frontend): add capability-gated conversation threads (#99)",
-          "url": "https://github.com/mohripan/flint-graph/commit/4bdd96b2675c4b174b4d1a26da101f7f278bdf09",
-          "date": "2026-10-10T17:31:35Z",
+          "title": "feat(studio): the first approved image is the default expression, and scenes need one",
+          "url": "https://github.com/mohripan/flint-graph/commit/a819bc6d1896101eb534864fc0c5dfb945a5861b",
+          "date": "2026-11-07T16:42:34Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "193a264799d4451c227c8ee4783231a4ad044102",
+          "id": "85d4082c1846ce67102bf2aaab126cb62c0361a6",
           "kind": "commit",
-          "title": "docs: design the capability-gated conversation thread interface",
-          "url": "https://github.com/mohripan/flint-graph/commit/193a264799d4451c227c8ee4783231a4ad044102",
-          "date": "2026-10-10T14:23:32Z",
+          "title": "chore(deploy): roll out the assistant's fix for speakers left off stage",
+          "url": "https://github.com/mohripan/flint-graph/commit/85d4082c1846ce67102bf2aaab126cb62c0361a6",
+          "date": "2026-11-07T16:21:43Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "8f2b465dc0a7aa023deef3978b6a43da7f4744fa",
+          "id": "38c9f395c021e80a0c7742ec6fa595670671cceb",
           "kind": "commit",
-          "title": "feat: add authorized conversation title discovery and rename",
-          "url": "https://github.com/mohripan/flint-graph/commit/8f2b465dc0a7aa023deef3978b6a43da7f4744fa",
-          "date": "2026-10-10T14:18:07Z",
+          "title": "fix(assistant): put whoever speaks a new line on stage",
+          "url": "https://github.com/mohripan/flint-graph/commit/38c9f395c021e80a0c7742ec6fa595670671cceb",
+          "date": "2026-11-07T16:14:45Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "f4857b9963c2c88a1c502b1f10f4c374ed66df59",
+          "id": "a7ba4f1629590a256d2b4f57967d4aa47e6a95c1",
           "kind": "commit",
-          "title": "feat: resolve revalidated bounded prior-year conversation turns",
-          "url": "https://github.com/mohripan/flint-graph/commit/f4857b9963c2c88a1c502b1f10f4c374ed66df59",
-          "date": "2026-10-10T14:07:10Z",
+          "title": "test(deploy): read both routes in the production ingress",
+          "url": "https://github.com/mohripan/flint-graph/commit/a7ba4f1629590a256d2b4f57967d4aa47e6a95c1",
+          "date": "2026-11-07T16:07:14Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "486b2fa9b55aaf15e98883bcee0a37529a80b930",
+          "id": "cba80f06f4cc5406782ce3ee383f9d56562720bb",
           "kind": "commit",
-          "title": "docs(architecture): bound source-revalidated prior-year followups (#97)",
-          "url": "https://github.com/mohripan/flint-graph/commit/486b2fa9b55aaf15e98883bcee0a37529a80b930",
-          "date": "2026-10-10T13:40:35Z",
+          "title": "feat(deploy): serve playtests on the live site",
+          "url": "https://github.com/mohripan/flint-graph/commit/cba80f06f4cc5406782ce3ee383f9d56562720bb",
+          "date": "2026-11-07T16:06:36Z",
           "author": "mohripan",
           "bot": false
         }
@@ -287,19 +405,20 @@
       "name": "Capsulet",
       "repo": "mohripan/capsulet",
       "url": "https://github.com/mohripan/capsulet",
+      "liveUrl": null,
       "category": "Workflow engines",
-      "summary": "Correctness-first AI-agent workflows. Typed graphs, governed memory, and execution you can inspect.",
+      "summary": "Correctness-first AI-agent workflows. Typed graphs on a durable worker, governed memory, and a deterministic kernel that issues certificates.",
       "tags": [
         "Rust",
         "AI agents",
-        "Workflow orchestration"
+        "Durable execution"
       ],
       "language": "Rust",
       "status": "Open source",
       "branch": "main",
       "stars": 3,
-      "pushedAt": "2026-10-14T17:56:24Z",
-      "readme": "<!-- capsulet-claims: CAP-PRODUCT-001, CAP-CORRECTNESS-001, CAP-CORRECTNESS-002, CAP-GRAPH-001, CAP-AGENT-001, CAP-AGENT-002, CAP-MEMORY-001, CAP-JOB-001, CAP-WORKFLOW-001, CAP-AUTOMATION-001, CAP-IAM-001, CAP-PERSISTENCE-001, CAP-DASHBOARD-001, CAP-SDK-001, CAP-OBSERVABILITY-001, CAP-SECURITY-001, CAP-HELM-001, CAP-CORRECTNESS-013 -->\n# Capsulet\n\nCapsulet is a correctness-first AI-agent workflow platform for building and operating workflows\nwhose important outputs can be inspected, checked, and governed.\n\nThe product has three layers: an implemented workflow/job engine for deterministic execution and\ncompatibility, an experimental agent platform with typed graphs and governed memory, and a\ncorrectness plane whose deterministic kernel is implemented but whose runtime-wide admission and\nassurance model is planned. See the\n[product constitution](docs/superpowers/specs/2026-08-30-correctness-first-agent-workflow-platform-design.md)\nand the [public claim registry](docs/contracts/product-claims.md) for the authoritative boundaries.\nPublic stability, migration, lifecycle, and SDK rules are indexed in\n[docs/contracts](docs/contracts/README.md).\n\nFor a deterministic local check that needs no service containers, run\n`cargo run -p capsulet-xtask --locked -- verify --profile fast`. The full release-equivalent graph\nis `verify --profile full`; inspect its machine-readable definition with\n`verify --list --format json`.\n\n![Capsulet workflow dashboard](docs/images/capsulet-dashboard.png)\n\n## What works today\n\n- typed agent graph definitions with nodes, ports, hyperedges, transition policies, and static execution order\n- agent definitions with graph references, step/token/time/cost budgets, and termination policies\n- queued agent runs with durable state snapshots and semantic trace events\n- application-level agent runtime execution with pluggable node adapters, budget enforcement, failure handling, and validator-pass completion\n- claim-first memory records for sources, evidence, entities, claims, events, relationships, and contract DSL summaries\n- nested memory subgraphs with owner, schema, permissions, summary-claim, summary-trace, membership, activation, canonical entity, graph attachment, and explicit cross-subgraph edge primitives\n- deterministic local ingestion that proposes candidate claims and evidence-backed memory from uploaded text\n- human review queues for candidate claims, entity-resolution proposals, and conflicting active claims\n- reusable Python job definitions with JSON input schemas and retry policies\n- compatibility workflow DAGs with parallel roots, fan-out, and fan-in dependencies\n- manual, timezone-aware cron, read-only SQL, signed webhook, and isolated custom-plugin triggers\n- bearer authentication with viewer/operator/admin authorization and durable mutation auditing\n- durable PostgreSQL agent, graph, job, attempt, workflow-step, log, and artifact metadata\n- stub, trusted local process, WASI Python, and Kubernetes Job runners\n- S3-compatible or filesystem artifact storage\n- enforced execution-pool concurrency, cancellation, timeouts, delayed retry, and stale-lease recovery\n- owner-bound worker heartbeats and finalization that fence stale workers after lease adoption\n- workflow resume from successful step checkpoints after failure or timeout\n- Kubernetes Job reattachment after worker failure\n- API, worker, scheduler, and evaluator health and Prometheus metrics endpoints\n- configurable artifact, log, trigger-event, and audit retention cleanup\n- Docker Compose for local use and a Helm chart for Kubernetes\n\n## Product layers\n\nCapsulet is organized as three cooperating layers:\n\n- **Workflow engine (implemented compatibility infrastructure):** durable jobs, runners, workflow\n  DAGs, triggers, retries, cancellation, logs, and artifacts.\n- **Agent platform (experimental):** typed agent definitions and static execution graphs, budgets,\n  opaque JSON state snapshots, traces, and governed-memory adapters. There is not yet a dedicated\n  production agent worker.\n- **Correctness plane (implemented kernel slice; planned platform enforcement):** proposals,\n  deterministic checks, evidence, residual obligations, and certificates. Runtime-wide protected\n  boundary admission and the unified verified-computation IR are not implemented yet.\n\nGoverned memory is a major agent-platform subsystem, not Capsulet's complete identity. It models\nclaims, entities, events, relationships, evidence, permissions, source authority, contradictions,\nreview state, and nested contexts.\n\nAn agent definition binds a graph to an enterprise control envelope: max steps, tokens, runtime seconds, cost, and explicit termination conditions. An agent run carries a JSON state document. The runtime executes graph nodes through pluggable adapters, writes state snapshots after node completion, appends trace events, and stops on success, failure, or budget/termination policy.\n\n```text\nagent graph -> agent definition -> agent run -> node adapter -> state snapshot\n                                      |              |\n                                      v              v\n                               trace events    model/tool/vector work\n```\n\nThe memory graph is claim-first. A claim records what was said, who or what it is about, where it came from, when it was observed or valid, its confidence, and its review state. Nested subgraphs provide bounded memory contexts for teams, projects, customers, incidents, or personal modules. Each active subgraph must have an owner, schema, permissions, summary claim, and traceability from that summary back to inner claims or evidence. Canonical entities connect local entities across subgraphs without erasing context-specific disagreement.\n\n```text\nraw text -> source/evidence -> candidate claims -> review -> active memory\n                                           |             |\n                                           v             v\n                                  entity resolution   conflict inbox\n```\n\n## Correctness direction and current boundary\n\nThe deterministic three-valued kernel and a narrow reasoning/certificate API slice are implemented.\nThe four-valued platform assurance model, trust-typed workflow IR, universal admission checks, and\ndurable looping graph worker are planned. The full direction is in the\n[product constitution](docs/superpowers/specs/2026-08-30-correctness-first-agent-workflow-platform-design.md);\nthe narrower proposer/checker foundation remains in\n[docs/design/correctness-architecture.md](docs/design/correctness-architecture.md) and\n[ADR 0012](docs/adr/0012-correctness-kernel-and-proposer-checker-split.md).\n\nThe goal is not to replace frontier models. It is to make a small model good enough for complex\nwork, by making correctness a property of the system rather than of the model. Small models are\npoor at long chains and roughly adequate at single hops, so the plan is to only ever ask for a\nsingle hop and move composition into deterministic mechanisms that can check it explicitly.\n\nThat requires being precise about what can be checked. Whether an id exists, whether a claim is\nactive, whether a quoted string is byte-identical to the span it cites, whether arithmetic\nrecomputes, whether two intervals overlap, whether a predicate is declared with that arity —\nall of these are mechanically decidable with no model in the loop. Whether a passage *means* what\na claim says it means is not, and no amount of architecture changes that.\n\nSo the boundary becomes the product. A node returns a proposal rather than a value; a\ndeterministic kernel with no learned component decides it and emits a certificate; and the\nverdict is three-valued. **Accepted** means every step was discharged mechanically. **Conditional**\nmeans the result is sound given a set of named readings, each pinned to a span. **Rejected** names\nthe failed premise and the subsystem that owns the repair. For contract-declared number, money,\nand date objects, citations compare exact values rather than their spelling. An unresolved shared\ncurrency symbol or numeric day/month date is an evidence-linked residual, never a guessed value\n(`CAP-CORRECTNESS-013`). Capsulet does not verify meaning today\neither — the difference is that it would stop implying otherwise, and report per answer exactly\nwhat was mechanically discharged and what was assumed.\n\nLearned components stay on the proposer side of that line. Knowledge graph embeddings are\nwell suited to generating retrieval candidates and ordering search, and unsuited to deciding\ntruth; an embedding score never appears in a certificate.\n\n```text\nproposer -> kernel (deterministic) -> certificate\n            no model, no network       verdict + discharged steps\n            no I/O beyond the store    + residual obligations\n```\n\n## How execution stays durable\n\nPostgreSQL is the source of truth. Agent graph definitions, agent definitions, agent runs, state snapshots, and trace events are persisted durably. The runtime can be driven by a worker in later slices without changing the graph or run model.\n\nThe existing job runner path remains durable as the lower-level execution substrate. A worker atomically leases a queued job, records the attempt, and renews the lease while execution is active. After lease expiry, non-reattachable work is requeued; Kubernetes work can be adopted by another worker without incrementing the attempt count. Heartbeat and finalization both require the current lease owner, so the previous worker cannot commit a result after adoption. See [ADR 0013](docs/adr/0013-owner-bound-finalization-for-adoptable-job-attempts.md).\n\nCompatibility workflow nodes still have durable step runs. Successful nodes are checkpoints: their metadata and artifacts remain complete even when another branch fails. Calling the resume endpoint removes only unsuccessful attempts and lets the scheduler reconstruct the missing runnable nodes from the saved graph state.\n\n## Local Docker Compose\n\nPrerequisites: Docker with Compose v2.\n\n```sh\ndocker compose up --build -d\ndocker compose ps\n```\n\nOpen the dashboard at <http://127.0.0.1:3000> and the API at <http://127.0.0.1:8080>.\n\nThe local stack includes PostgreSQL, MinIO, Mailpit, API, worker, scheduler, evaluator, and dashboard. Compose waits on dependency health and restarts long-running services after failure. Sign in with the development token `capsulet-local-admin-token-change-me`; replace it before exposing the stack.\n\nUseful checks:\n\n```sh\ncurl http://127.0.0.1:8080/livez\ncurl http://127.0.0.1:8080/readyz\ncurl http://127.0.0.1:8080/metrics\ndocker compose logs -f api worker scheduler evaluator\n```\n\nStop the stack without deleting persisted volumes:\n\n```sh\ndocker compose down\n```\n\n## Agent execution graph API\n\nCreate typed graphs, bind them to agents, and start agent runs:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/graphs\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/agents\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/agents/<agent-id>/runs\n```\n\nRead graph, agent, and run state:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/graphs\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/agents\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/agent-runs\n```\n\n## Memory Studio API\n\nMemory APIs are tenant/project scoped and claim-first. They support direct authoring, deterministic ingestion, review, and nested graph governance:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/sources\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/claims\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/ingestion/review/claims?status=candidate\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/entity-resolutions?status=candidate\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/conflicts?status=candidate\n```\n\nThe dashboard Memory Studio exposes ingestion, claim review, entity resolution, nested graph activation, and the conflict inbox as the first product surface for governing memory before agents consume it.\n\n## Kernel certificate API\n\nThe first slice of the correctness architecture is implemented: stored text is\ncut into byte-exact citable spans, retrieval pins the legal evidence set, a local\nmodel proposes a derivation, and a deterministic kernel decides it. The response\nis a certificate, not a bare answer.\n\nRequires a local [Ollama](https://ollama.com) with a small model pulled. The\nproposer runs outside the stack on purpose — correctness does not depend on it:\n\n```sh\nollama pull qwen2.5:1.5b\n# Ollama must accept traffic from the containers\nOLLAMA_HOST=0.0.0.0 ollama serve\n```\n\n```sh\ncurl -X POST -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \\\n  -d '{\"text\":\"Acme renewed the Contoso contract on 2026-03-01. Notice is 30 days.\",\n       \"question\":\"When was the contract renewed?\",\n       \"contract_id\":\"<a memory contract whose relations declare stated_by phrasings>\"}' \\\n  http://127.0.0.1:8080/v1/reasoning/ask\n\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/reasoning/certificates\n```\n\nVerdicts are three-valued. **accepted** means every step was discharged\nmechanically: the cited span re-derived byte-for-byte from the stored source and\nstates the claim in a phrasing its memory contract declares for the relation, in\none sentence that does not deny, hedge or question it. **conditional** means the\nderivation required a reading, which is recorded as a residual obligation pinned\nto the span it came from — which is every answer when no `contract_id` is given,\nbecause then no relation has a declared phrasing to be stated in. **rejected** names the failed premise and the subsystem that\nowns the repair, so a dangling reference re-runs retrieval instead of re-prompting\nthe model.\n\nPersisted kernel proposals always identify their schema. Offline replay reads a\nversionless legacy proposal as v1, refuses unsupported proposal versions as unreadable,\nand keeps malformed v1 input distinct; it does not claim a verdict for unreadable input.\n\nTwo limits are deliberate and documented: a declared phrasing is matched, not\nentailed — a sentence can still doubt it in words no cue list knows — and\nrelevance to the question is not checked at all. See\n[the design note](docs/design/correctness-architecture.md).\n\n## Compatibility workflow recovery API\n\nResume a failed or timed-out workflow run:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/workflow-runs/<run-id>/resume\n```\n\nThe response contains the workflow run and preserved successful step runs. Active, queued, cancelled, removed, and successful runs are rejected to avoid ambiguous recovery.\n\n## Kubernetes with Helm\n\nThe chart installs the API, worker, scheduler, evaluator, dashboard, migration job, separated control-plane/execution service accounts, default-deny execution network policy, services, configuration, and optional bundled PostgreSQL and MinIO.\n\n```sh\nhelm lint charts/capsulet\nkubectl create namespace capsulet\nkubectl create secret generic capsulet-api-auth \\\n  --namespace capsulet \\\n  --from-literal='tokens=[{\"name\":\"cluster-admin\",\"role\":\"admin\",\"token\":\"replace-with-at-least-32-random-characters\"}]'\nhelm install capsulet charts/capsulet \\\n  --namespace capsulet \\\n  --set api.auth.existingSecret=capsulet-api-auth\n\nkubectl wait --for=condition=available deployment \\\n  --all --namespace capsulet --timeout=5m\nkubectl port-forward service/capsulet-dashboard 3000:80 --namespace capsulet\n```\n\nProduction deployments should use external managed PostgreSQL and object storage, immutable image tags, network policies, and dedicated execution capacity. Capsulet constrains execution pods but does not claim to be a complete sandbox for hostile code.\n\nSee [installation](docs/installation.md), [Helm values](docs/helm-values.md), and [worker/runner design](docs/worker-runner.md) for configuration details.\n\n## Repository layout\n\n```text\ncrates/\n  application/  application services, agent runtime use cases, and ports\n  api/          HTTP control plane\n  core/         domain types, state machines, and validation rules\n  postgres/     SQLx persistence and migrations\n  runner/       runner contracts plus stub, process, WASI, and Kubernetes adapters\n  scheduler/    compatibility automation triggering and DAG reconciliation\n  evaluator/    durable trigger evaluation and retention cleanup\n  worker/       lower-level job runtime loop, runner selection, and health endpoints\n  storage/      filesystem and S3-compatible object storage\n  cli/          command-line client\ndashboard/      Next.js dashboard\nsdk/python/     decorator-based Python workflow SDK\ncharts/capsulet Helm chart\nmigrations/     PostgreSQL schema history\n```\n\n## Development and verification\n\nThe repository's product vocabulary and public contract inventory have one local/CI gate:\n\n```powershell\npwsh ./scripts/check-contracts.ps1\n```\n\nIt checks claim evidence and generated claim docs, lifecycle/assurance mappings, accepted ADR\nevidence, generated OpenAPI/runtime parity, authorization metadata, deterministic artifacts, and\nthe experimental Python/dashboard operation maps. See the [public contracts](docs/contracts/README.md)\nand [development guide](docs/development.md) before changing a public claim, endpoint, status, or\nclient call.\n\n### Python workflow authoring\n\nPython workflows are still available as a compatibility authoring path and as a useful substrate for deterministic agent tools. They can be authored as decorated Python functions or as Python cells in the dashboard notebook. The [CSV artifact pipeline](examples/workflows/csv_pipeline.py) creates a CSV in one task, passes it to a dependent task, and downloads the transformed artifact. See the [example instructions](examples/workflows/README.md) for the end-to-end commands.\n\nRust is pinned to version 1.96.0. The dashboard requires Node.js 20 or newer.\n\n```sh\ncargo fmt --all -- --check\ncargo clippy --workspace --all-targets --all-features --locked -- -D warnings\ncargo test --workspace --all-targets --locked\n\ncd dashboard\nnpm ci\nnpm test\nnpm run build\nnpm run test:e2e\n```\n\nDatabase integration tests run when `CAPSULET_TEST_DATABASE_URL` is set. Full local and Kubernetes validation steps are documented in [development](docs/development.md).\n\n## Documentation\n\n- [Architecture](ARCHITECTURE.md)\n- [Correctness architecture (direction)](docs/design/correctness-architecture.md)\n- [API](docs/api.md)\n- [Development](docs/development.md)\n- [Installation](docs/installation.md)\n- [Persistence](docs/persistence.md)\n\n## License\n\nApache-2.0. See [LICENSE](LICENSE).\n",
+      "pushedAt": "2026-11-08T06:06:39Z",
+      "readme": "<!-- capsulet-claims: CAP-PRODUCT-001, CAP-CORRECTNESS-001, CAP-CORRECTNESS-002, CAP-GRAPH-001, CAP-AGENT-001, CAP-AGENT-002, CAP-AGENT-003, CAP-AGENT-004, CAP-AGENT-005, CAP-AGENT-006, CAP-AGENT-007, CAP-MEMORY-001, CAP-JOB-001, CAP-WORKFLOW-001, CAP-AUTOMATION-001, CAP-IAM-001, CAP-PERSISTENCE-001, CAP-DASHBOARD-001, CAP-SDK-001, CAP-OBSERVABILITY-001, CAP-SECURITY-001, CAP-HELM-001, CAP-CORRECTNESS-013 -->\n# Capsulet\n\nCapsulet is a correctness-first AI-agent workflow platform for building and operating workflows\nwhose important outputs can be inspected, checked, and governed.\n\nThe product has three layers: an implemented workflow/job engine for deterministic execution and\ncompatibility, an experimental agent platform with typed graphs, a durable worker that executes them, and\ngoverned memory, and a correctness plane whose deterministic kernel is implemented but whose runtime-wide admission and\nassurance model is planned. See the\n[product constitution](docs/superpowers/specs/2026-08-30-correctness-first-agent-workflow-platform-design.md)\nand the [public claim registry](docs/contracts/product-claims.md) for the authoritative boundaries.\nPublic stability, migration, lifecycle, and SDK rules are indexed in\n[docs/contracts](docs/contracts/README.md).\n\nFor a deterministic local check that needs no service containers, run\n`cargo run -p capsulet-xtask --locked -- verify --profile fast`. The full release-equivalent graph\nis `verify --profile full`; inspect its machine-readable definition with\n`verify --list --format json`.\n\n![Capsulet workflow dashboard](docs/images/capsulet-dashboard.png)\n\n## What works today\n\n- typed agent graph definitions with nodes, ports, hyperedges, transition policies, and static execution order\n- agent definitions with graph references, step/token/time/cost budgets, and termination policies\n- agent runs executed by a dedicated durable worker, with deterministic nodes, local-model nodes, memory reads, validators, and job and memory-write effects that happen once per run\n- validators that send an agent round again until it passes or a budget stops it, with usage and every step readable from the run's log\n- cancelling a run, and approving or refusing one waiting at a human gate, over the API\n- claim-first memory records for sources, evidence, entities, claims, events, relationships, and contract DSL summaries\n- nested memory subgraphs with owner, schema, permissions, summary-claim, summary-trace, membership, activation, canonical entity, graph attachment, and explicit cross-subgraph edge primitives\n- deterministic local ingestion that proposes candidate claims and evidence-backed memory from uploaded text\n- human review queues for candidate claims, entity-resolution proposals, and conflicting active claims\n- reusable Python job definitions with JSON input schemas and retry policies\n- compatibility workflow DAGs with parallel roots, fan-out, and fan-in dependencies\n- manual, timezone-aware cron, read-only SQL, signed webhook, and isolated custom-plugin triggers\n- bearer authentication with viewer/operator/admin authorization and durable mutation auditing\n- durable PostgreSQL agent, graph, job, attempt, workflow-step, log, and artifact metadata\n- stub, trusted local process, WASI Python, and Kubernetes Job runners\n- S3-compatible or filesystem artifact storage\n- enforced execution-pool concurrency, cancellation, timeouts, delayed retry, and stale-lease recovery\n- owner-bound worker heartbeats and finalization that fence stale workers after lease adoption\n- workflow resume from successful step checkpoints after failure or timeout\n- Kubernetes Job reattachment after worker failure\n- API, worker, scheduler, and evaluator health and Prometheus metrics endpoints\n- configurable artifact, log, trigger-event, and audit retention cleanup\n- Docker Compose for local use and a Helm chart for Kubernetes\n\n## Product layers\n\nCapsulet is organized as three cooperating layers:\n\n- **Workflow engine (implemented compatibility infrastructure):** durable jobs, runners, workflow\n  DAGs, triggers, retries, cancellation, logs, and artifacts.\n- **Agent platform (experimental):** typed agent definitions and static execution graphs, budgets,\n  validators that drive a bounded loop, and a durable worker that executes them against governed\n  memory and a local model. A graph where a model chooses the next node cannot run yet and is refused\n  at run start, and a finished run is `unverified`: nothing has checked its result.\n- **Correctness plane (implemented kernel slice; planned platform enforcement):** proposals,\n  deterministic checks, evidence, residual obligations, and certificates. Runtime-wide protected\n  boundary admission and the unified verified-computation IR are not implemented yet.\n\nGoverned memory is a major agent-platform subsystem, not Capsulet's complete identity. It models\nclaims, entities, events, relationships, evidence, permissions, source authority, contradictions,\nreview state, and nested contexts.\n\nAn agent definition binds a graph to a control envelope: iterations, tokens, runtime seconds, cost, and explicit termination conditions. Starting a run compiles the agent into a versioned definition, and the graph worker executes it as a bounded loop. Node configuration is part of that version, so changing a prompt makes a new one. A failed validator sends the run round again with what its last attempt left. A budget, a lack of progress, a safety check or a person's refusal ends it as `stopped`, never as `succeeded`.\n\n```text\nstate -> agent-enter -> (your graph) -> agent-continue -> agent-leave -> state\n                             |                 |\n                             v                 v\n                   event log and usage    go round again?\n```\n\nThe memory graph is claim-first. A claim records what was said, who or what it is about, where it came from, when it was observed or valid, its confidence, and its review state. Nested subgraphs provide bounded memory contexts for teams, projects, customers, incidents, or personal modules. Each active subgraph must have an owner, schema, permissions, summary claim, and traceability from that summary back to inner claims or evidence. Canonical entities connect local entities across subgraphs without erasing context-specific disagreement.\n\n```text\nraw text -> source/evidence -> candidate claims -> review -> active memory\n                                           |             |\n                                           v             v\n                                  entity resolution   conflict inbox\n```\n\n## Correctness direction and current boundary\n\nThe deterministic three-valued kernel and a narrow reasoning/certificate API slice are implemented.\nThe four-valued platform assurance model, trust-typed workflow IR, universal admission checks, and\ndurable looping graph worker are planned. The full direction is in the\n[product constitution](docs/superpowers/specs/2026-08-30-correctness-first-agent-workflow-platform-design.md);\nthe narrower proposer/checker foundation remains in\n[docs/design/correctness-architecture.md](docs/design/correctness-architecture.md) and\n[ADR 0012](docs/adr/0012-correctness-kernel-and-proposer-checker-split.md).\n\nThe goal is not to replace frontier models. It is to make a small model good enough for complex\nwork, by making correctness a property of the system rather than of the model. Small models are\npoor at long chains and roughly adequate at single hops, so the plan is to only ever ask for a\nsingle hop and move composition into deterministic mechanisms that can check it explicitly.\n\nThat requires being precise about what can be checked. Whether an id exists, whether a claim is\nactive, whether a quoted string is byte-identical to the span it cites, whether arithmetic\nrecomputes, whether two intervals overlap, whether a predicate is declared with that arity —\nall of these are mechanically decidable with no model in the loop. Whether a passage *means* what\na claim says it means is not, and no amount of architecture changes that.\n\nSo the boundary becomes the product. A node returns a proposal rather than a value; a\ndeterministic kernel with no learned component decides it and emits a certificate; and the\nverdict is three-valued. **Accepted** means every step was discharged mechanically. **Conditional**\nmeans the result is sound given a set of named readings, each pinned to a span. **Rejected** names\nthe failed premise and the subsystem that owns the repair. For contract-declared number, money,\nand date objects, citations compare exact values rather than their spelling. An unresolved shared\ncurrency symbol or numeric day/month date is an evidence-linked residual, never a guessed value\n(`CAP-CORRECTNESS-013`). Capsulet does not verify meaning today\neither — the difference is that it would stop implying otherwise, and report per answer exactly\nwhat was mechanically discharged and what was assumed.\n\nLearned components stay on the proposer side of that line. Knowledge graph embeddings are\nwell suited to generating retrieval candidates and ordering search, and unsuited to deciding\ntruth; an embedding score never appears in a certificate.\n\n```text\nproposer -> kernel (deterministic) -> certificate\n            no model, no network       verdict + discharged steps\n            no I/O beyond the store    + residual obligations\n```\n\n## How execution stays durable\n\nPostgreSQL is the source of truth. An agent run's status is a fold over its append-only event log, so a worker that dies mid-run loses nothing: the next one reads the log and carries on. Effects are claimed before they are attempted, so a job or a memory write happens once however many workers it takes. See [ADR 0019](docs/adr/0019-agent-runs-execute-on-the-durable-path.md).\n\nThe existing job runner path remains durable as the lower-level execution substrate. A worker atomically leases a queued job, records the attempt, and renews the lease while execution is active. After lease expiry, non-reattachable work is requeued; Kubernetes work can be adopted by another worker without incrementing the attempt count. Heartbeat and finalization both require the current lease owner, so the previous worker cannot commit a result after adoption. See [ADR 0013](docs/adr/0013-owner-bound-finalization-for-adoptable-job-attempts.md).\n\nCompatibility workflow nodes still have durable step runs. Successful nodes are checkpoints: their metadata and artifacts remain complete even when another branch fails. Calling the resume endpoint removes only unsuccessful attempts and lets the scheduler reconstruct the missing runnable nodes from the saved graph state.\n\n## Local Docker Compose\n\nPrerequisites: Docker with Compose v2.\n\n```sh\ndocker compose up --build -d\ndocker compose ps\n```\n\nOpen the dashboard at <http://127.0.0.1:3000> and the API at <http://127.0.0.1:8080>.\n\nThe local stack includes PostgreSQL, Mailpit, API, worker, graph worker, scheduler, evaluator, and dashboard. Objects are stored on a shared volume, because MinIO no longer publishes the community images the stack used. Compose waits on dependency health and restarts long-running services after failure. Sign in with the development token `capsulet-local-admin-token-change-me`; replace it before exposing the stack.\n\nUseful checks:\n\n```sh\ncurl http://127.0.0.1:8080/livez\ncurl http://127.0.0.1:8080/readyz\ncurl http://127.0.0.1:8080/metrics\ndocker compose logs -f api worker graph-worker scheduler evaluator\n```\n\nStop the stack without deleting persisted volumes:\n\n```sh\ndocker compose down\n```\n\n## Agent execution graph API\n\nCreate typed graphs, bind them to agents, and start agent runs:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/graphs\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/agents\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/agents/<agent-id>/runs\n```\n\nRead a run, read its log, and act on it:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/agent-runs/<run-id>\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/agent-runs/<run-id>/events\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/agent-runs/<run-id>/cancel\ncurl -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \\\n  -d '{\"approved\":true}' -X POST http://127.0.0.1:8080/v1/agent-runs/<run-id>/decisions\n```\n\nModel nodes use a local [Ollama](https://ollama.com) at `CAPSULET_OLLAMA_URL`. With none reachable they\nfail and say so, and everything deterministic still runs. See [the API guide](docs/api.md#agents-and-agent-runs)\nfor what a node can be configured to do. `scripts/agent-smoke.ps1` runs agents through the stack, killing\nthe worker mid-run.\n\n## Memory Studio API\n\nMemory APIs are tenant/project scoped and claim-first. They support direct authoring, deterministic ingestion, review, and nested graph governance:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/sources\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/claims\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/ingestion/review/claims?status=candidate\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/entity-resolutions?status=candidate\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/memory/conflicts?status=candidate\n```\n\nThe dashboard Memory Studio exposes ingestion, claim review, entity resolution, nested graph activation, and the conflict inbox as the first product surface for governing memory before agents consume it.\n\n## Kernel certificate API\n\nThe first slice of the correctness architecture is implemented: stored text is\ncut into byte-exact citable spans, retrieval pins the legal evidence set, a local\nmodel proposes a derivation, and a deterministic kernel decides it. The response\nis a certificate, not a bare answer.\n\nRequires a local [Ollama](https://ollama.com) with a small model pulled. The\nproposer runs outside the stack on purpose — correctness does not depend on it:\n\n```sh\nollama pull qwen2.5:1.5b\n# Ollama must accept traffic from the containers\nOLLAMA_HOST=0.0.0.0 ollama serve\n```\n\n```sh\ncurl -X POST -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \\\n  -d '{\"text\":\"Acme renewed the Contoso contract on 2026-03-01. Notice is 30 days.\",\n       \"question\":\"When was the contract renewed?\",\n       \"contract_id\":\"<a memory contract whose relations declare stated_by phrasings>\"}' \\\n  http://127.0.0.1:8080/v1/reasoning/ask\n\ncurl -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/v1/reasoning/certificates\n```\n\nVerdicts are three-valued. **accepted** means every step was discharged\nmechanically: the cited span re-derived byte-for-byte from the stored source and\nstates the claim in a phrasing its memory contract declares for the relation, in\none sentence that does not deny, hedge or question it. **conditional** means the\nderivation required a reading, which is recorded as a residual obligation pinned\nto the span it came from — which is every answer when no `contract_id` is given,\nbecause then no relation has a declared phrasing to be stated in. **rejected** names the failed premise and the subsystem that\nowns the repair, so a dangling reference re-runs retrieval instead of re-prompting\nthe model.\n\nPersisted kernel proposals always identify their schema. Offline replay reads a\nversionless legacy proposal as v1, refuses unsupported proposal versions as unreadable,\nand keeps malformed v1 input distinct; it does not claim a verdict for unreadable input.\n\nTwo limits are deliberate and documented: a declared phrasing is matched, not\nentailed — a sentence can still doubt it in words no cue list knows — and\nrelevance to the question is not checked at all. See\n[the design note](docs/design/correctness-architecture.md).\n\n## Compatibility workflow recovery API\n\nResume a failed or timed-out workflow run:\n\n```sh\ncurl -H 'Authorization: Bearer <token>' -X POST http://127.0.0.1:8080/v1/workflow-runs/<run-id>/resume\n```\n\nThe response contains the workflow run and preserved successful step runs. Active, queued, cancelled, removed, and successful runs are rejected to avoid ambiguous recovery.\n\n## Kubernetes with Helm\n\nThe chart installs the API, worker, graph worker, scheduler, evaluator, dashboard, migration job, separated control-plane/execution service accounts, default-deny execution network policy, services, configuration, and optional bundled PostgreSQL and MinIO.\n\n```sh\nhelm lint charts/capsulet\nkubectl create namespace capsulet\nkubectl create secret generic capsulet-api-auth \\\n  --namespace capsulet \\\n  --from-literal='tokens=[{\"name\":\"cluster-admin\",\"role\":\"admin\",\"token\":\"replace-with-at-least-32-random-characters\"}]'\nhelm install capsulet charts/capsulet \\\n  --namespace capsulet \\\n  --set api.auth.existingSecret=capsulet-api-auth\n\nkubectl wait --for=condition=available deployment \\\n  --all --namespace capsulet --timeout=5m\nkubectl port-forward service/capsulet-dashboard 3000:80 --namespace capsulet\n```\n\nProduction deployments should use external managed PostgreSQL and object storage, immutable image tags, network policies, and dedicated execution capacity. Capsulet constrains execution pods but does not claim to be a complete sandbox for hostile code.\n\nSee [installation](docs/installation.md), [Helm values](docs/helm-values.md), and [worker/runner design](docs/worker-runner.md) for configuration details.\n\n## Repository layout\n\n```text\ncrates/\n  application/  application services, agent runtime use cases, and ports\n  api/          HTTP control plane\n  core/         domain types, state machines, and validation rules\n  postgres/     SQLx persistence and migrations\n  runner/       runner contracts plus stub, process, WASI, and Kubernetes adapters\n  scheduler/    compatibility automation triggering and DAG reconciliation\n  evaluator/    durable trigger evaluation and retention cleanup\n  worker/       lower-level job runtime loop, runner selection, and health endpoints\n  graph-worker/ durable worker that executes agent runs and IR runs\n  storage/      filesystem and S3-compatible object storage\n  cli/          command-line client\ndashboard/      Next.js dashboard\nsdk/python/     decorator-based Python workflow SDK\ncharts/capsulet Helm chart\nmigrations/     PostgreSQL schema history\n```\n\n## Development and verification\n\nThe repository's product vocabulary and public contract inventory have one local/CI gate:\n\n```powershell\npwsh ./scripts/check-contracts.ps1\n```\n\nIt checks claim evidence and generated claim docs, lifecycle/assurance mappings, accepted ADR\nevidence, generated OpenAPI/runtime parity, authorization metadata, deterministic artifacts, and\nthe experimental Python/dashboard operation maps. See the [public contracts](docs/contracts/README.md)\nand [development guide](docs/development.md) before changing a public claim, endpoint, status, or\nclient call.\n\n### Python workflow authoring\n\nPython workflows are still available as a compatibility authoring path and as a useful substrate for deterministic agent tools. They can be authored as decorated Python functions or as Python cells in the dashboard notebook. The [CSV artifact pipeline](examples/workflows/csv_pipeline.py) creates a CSV in one task, passes it to a dependent task, and downloads the transformed artifact. See the [example instructions](examples/workflows/README.md) for the end-to-end commands.\n\nRust is pinned to version 1.96.0. The dashboard requires Node.js 20 or newer.\n\n```sh\ncargo fmt --all -- --check\ncargo clippy --workspace --all-targets --all-features --locked -- -D warnings\ncargo test --workspace --all-targets --locked\n\ncd dashboard\nnpm ci\nnpm test\nnpm run build\nnpm run test:e2e\n```\n\nDatabase integration tests require `CAPSULET_TEST_DATABASE_URL`, naming a server on which each test binary creates a database of its own. Full local and Kubernetes validation steps are documented in [development](docs/development.md).\n\n## Documentation\n\n- [Architecture](ARCHITECTURE.md)\n- [Correctness architecture (direction)](docs/design/correctness-architecture.md)\n- [API](docs/api.md)\n- [Development](docs/development.md)\n- [Installation](docs/installation.md)\n- [Persistence](docs/persistence.md)\n\n## License\n\nApache-2.0. See [LICENSE](LICENSE).\n",
       "readmePath": "README.md",
       "fallbackAbout": null,
       "description": null,
@@ -318,8 +437,8 @@
           "description": "Engineering integrity plan Tasks 3-11. Required PostgreSQL, IAM, deterministic environments, security, release identity, immutable artifacts, CI, real Helm/Kind smoke and clean-checkout rehearsal. A passing subset does not close this milestone.",
           "state": "open",
           "url": "https://github.com/mohripan/capsulet/milestone/2",
-          "open": 11,
-          "closed": 0,
+          "open": 10,
+          "closed": 1,
           "due": null
         },
         {
@@ -327,8 +446,8 @@
           "description": "Refines existing M5, not a renumbering. Connect run/node/model/retrieval/tool telemetry to evidence and certificates; make outputs inspectable without claiming hidden reasoning access. Privacy and tenant isolation are required. Evaluate reusable telemetry backends before custom UI. M1 engineering integrity remains the release prerequisite.",
           "state": "open",
           "url": "https://github.com/mohripan/capsulet/milestone/3",
-          "open": 6,
-          "closed": 0,
+          "open": 5,
+          "closed": 1,
           "due": null
         },
         {
@@ -354,248 +473,248 @@
           "description": "Complete citation grounding Tasks 6-9: proposal schema compatibility, exact typed values with ambiguity residuals, reviewer-confirmed entity names, and an honest labelled statement corpus. Follow docs/superpowers/plans/2026-10-04-citation-grounding.md and its handoff. Kernel remains deterministic/model-free; authority floor stays low.",
           "state": "open",
           "url": "https://github.com/mohripan/capsulet/milestone/6",
-          "open": 3,
-          "closed": 2,
+          "open": 0,
+          "closed": 5,
           "due": null
         }
       ],
       "tasks": [],
       "roadmapUrl": null,
       "issues": {
-        "open": 29,
-        "closed": 2
+        "open": 24,
+        "closed": 7
       },
       "progress": {
         "source": "milestones",
-        "closed": 2,
+        "closed": 7,
         "total": 31,
-        "percent": 6
+        "percent": 23
       },
       "activity": [
         {
-          "id": "pr-90",
-          "kind": "pull-request",
-          "title": "chore(deps-dev): bump eslint from 9.39.5 to 10.12.0 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/90",
-          "date": "2026-10-14T17:56:24Z",
-          "author": "dependabot[bot]",
-          "bot": true,
-          "state": "closed"
+          "id": "93453943276d7137ea69029595cfc0df7dcf04a4",
+          "kind": "commit",
+          "title": "feat(observability): continue callers' traces and trace IR runs end to end (closes #106)",
+          "url": "https://github.com/mohripan/capsulet/commit/93453943276d7137ea69029595cfc0df7dcf04a4",
+          "date": "2026-11-08T06:06:36Z",
+          "author": "mohripan",
+          "bot": false
         },
         {
-          "id": "pr-125",
+          "id": "b47780236a9e9d43d9edf5fb2b6960ba0f58a4a6",
+          "kind": "commit",
+          "title": "feat(agents): export digest-checked run bundles and explain them offline (refs #114)",
+          "url": "https://github.com/mohripan/capsulet/commit/b47780236a9e9d43d9edf5fb2b6960ba0f58a4a6",
+          "date": "2026-11-08T02:22:07Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "951b686961e928ac914d7d06319ecd1723b27104",
+          "kind": "commit",
+          "title": "feat(agents): erase a finished run's payloads while keeping its record (refs #109)",
+          "url": "https://github.com/mohripan/capsulet/commit/951b686961e928ac914d7d06319ecd1723b27104",
+          "date": "2026-11-08T02:10:50Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "ba82c62244595d212a7a6c7568824819c03f8a9d",
+          "kind": "commit",
+          "title": "fix(graph-worker): hold definition-supplied model names to a length in telemetry (refs #109)",
+          "url": "https://github.com/mohripan/capsulet/commit/ba82c62244595d212a7a6c7568824819c03f8a9d",
+          "date": "2026-11-08T01:56:00Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "e54903364bf4192ab579d41cdb40fa76a677e3b6",
+          "kind": "commit",
+          "title": "fix(graph-worker): keep the model endpoint's address out of failure details (refs #109)",
+          "url": "https://github.com/mohripan/capsulet/commit/e54903364bf4192ab579d41cdb40fa76a677e3b6",
+          "date": "2026-11-08T01:54:51Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "5ee5e7cbba6b09a793b1338cd88605deaa9c698d",
+          "kind": "commit",
+          "title": "fix(api): label request metrics by route template, never the raw path (refs #106, #109)",
+          "url": "https://github.com/mohripan/capsulet/commit/5ee5e7cbba6b09a793b1338cd88605deaa9c698d",
+          "date": "2026-11-08T01:53:27Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "c2b38040795db1a094eb37b9b2661800fcaafcdd",
+          "kind": "commit",
+          "title": "test: give each database-backed test binary its own database (refs #96)",
+          "url": "https://github.com/mohripan/capsulet/commit/c2b38040795db1a094eb37b9b2661800fcaafcdd",
+          "date": "2026-11-08T01:47:08Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "d3a859609818ca235c2810be5bc63e2995be1acc",
+          "kind": "commit",
+          "title": "feat(observability): trace agent runs as one trace with pinned GenAI conventions (refs #106)",
+          "url": "https://github.com/mohripan/capsulet/commit/d3a859609818ca235c2810be5bc63e2995be1acc",
+          "date": "2026-11-08T01:42:06Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "ef8d3be60375b0861b31c29c9d6ddec0c9d0fa25",
+          "kind": "commit",
+          "title": "test(postgres): assert fixture ids by prefix now that they are time-based",
+          "url": "https://github.com/mohripan/capsulet/commit/ef8d3be60375b0861b31c29c9d6ddec0c9d0fa25",
+          "date": "2026-11-08T01:42:05Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "pr-9",
           "kind": "pull-request",
-          "title": "chore(deps-dev): bump eslint from 9.39.5 to 10.12.0 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/125",
-          "date": "2026-10-14T17:56:19Z",
+          "title": "Bump node from 20-alpine to 26-alpine",
+          "url": "https://github.com/mohripan/capsulet/pull/9",
+          "date": "2026-11-08T01:18:29Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "open"
         },
         {
-          "id": "pr-76",
-          "kind": "pull-request",
-          "title": "build(deps): bump rust from 1.97-bookworm to 1.98-bookworm",
-          "url": "https://github.com/mohripan/capsulet/pull/76",
-          "date": "2026-10-14T17:55:05Z",
-          "author": "dependabot[bot]",
-          "bot": true,
-          "state": "closed"
+          "id": "d1a552b863295a5edf938313579b7313964e8592",
+          "kind": "commit",
+          "title": "fix(compose): store objects on a volume now that MinIO images are gone (refs #98, #102)",
+          "url": "https://github.com/mohripan/capsulet/commit/d1a552b863295a5edf938313579b7313964e8592",
+          "date": "2026-11-08T01:17:09Z",
+          "author": "mohripan",
+          "bot": false
         },
         {
-          "id": "pr-124",
+          "id": "fef21f2f9765892e33e393941ef6f9c5dcea5755",
+          "kind": "commit",
+          "title": "fix(iam): own automations, plugins and runs in the write that creates them (refs #97, #96)",
+          "url": "https://github.com/mohripan/capsulet/commit/fef21f2f9765892e33e393941ef6f9c5dcea5755",
+          "date": "2026-11-08T01:05:45Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "a499f8fc5e84782a84c82e16f5ec93599c624aa7",
+          "kind": "commit",
+          "title": "feat: ground entities by confirmed names and assert a labelled statement corpus (refs #121, #122)",
+          "url": "https://github.com/mohripan/capsulet/commit/a499f8fc5e84782a84c82e16f5ec93599c624aa7",
+          "date": "2026-11-07T21:21:42Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "pr-138",
           "kind": "pull-request",
-          "title": "chore(deps): bump rust from 1.97-bookworm to 1.99-bookworm",
-          "url": "https://github.com/mohripan/capsulet/pull/124",
-          "date": "2026-10-14T17:55:00Z",
+          "title": "chore(deps): bump lucide-react from 1.55.0 to 1.68.0 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/138",
+          "date": "2026-11-07T21:15:39Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "open"
         },
         {
-          "id": "0deac3660f66ba60b59a3006eb23559d0b505c03",
-          "kind": "commit",
-          "title": "feat: ground typed citation values exactly",
-          "url": "https://github.com/mohripan/capsulet/commit/0deac3660f66ba60b59a3006eb23559d0b505c03",
-          "date": "2026-10-11T05:34:56Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "0e7c4ec476cef5aa89c92943f49d5643c7543d09",
-          "kind": "commit",
-          "title": "fix: version persisted kernel proposals",
-          "url": "https://github.com/mohripan/capsulet/commit/0e7c4ec476cef5aa89c92943f49d5643c7543d09",
-          "date": "2026-10-11T04:38:10Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "pr-92",
+          "id": "pr-139",
           "kind": "pull-request",
-          "title": "chore(deps-dev): bump @types/node from 26.4.1 to 26.6.2 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/92",
-          "date": "2026-10-11T04:33:08Z",
+          "title": "chore(deps-dev): bump eslint from 9.39.5 to 10.14.0 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/139",
+          "date": "2026-11-07T21:15:35Z",
+          "author": "dependabot[bot]",
+          "bot": true,
+          "state": "open"
+        },
+        {
+          "id": "pr-131",
+          "kind": "pull-request",
+          "title": "chore(deps): bump react-dom from 19.3.0 to 19.3.1 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/131",
+          "date": "2026-11-07T21:15:32Z",
+          "author": "dependabot[bot]",
+          "bot": true,
+          "state": "open"
+        },
+        {
+          "id": "pr-126",
+          "kind": "pull-request",
+          "title": "chore(deps): bump react from 19.3.0 to 19.3.1 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/126",
+          "date": "2026-11-07T21:15:28Z",
+          "author": "dependabot[bot]",
+          "bot": true,
+          "state": "open"
+        },
+        {
+          "id": "pr-135",
+          "kind": "pull-request",
+          "title": "chore(deps-dev): bump eslint-config-next from 16.4.0 to 16.4.3 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/135",
+          "date": "2026-11-07T21:15:27Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "closed"
         },
         {
-          "id": "pr-91",
+          "id": "pr-137",
           "kind": "pull-request",
-          "title": "chore(deps): bump lucide-react from 1.41.0 to 1.47.0 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/91",
-          "date": "2026-10-11T04:33:00Z",
+          "title": "chore(deps-dev): bump autoprefixer from 10.6.1 to 10.6.2 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/137",
+          "date": "2026-11-07T21:15:26Z",
+          "author": "dependabot[bot]",
+          "bot": true,
+          "state": "open"
+        },
+        {
+          "id": "pr-133",
+          "kind": "pull-request",
+          "title": "chore(deps): bump next from 16.4.0 to 16.4.3 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/133",
+          "date": "2026-11-07T21:15:26Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "closed"
         },
         {
-          "id": "pr-84",
+          "id": "pr-127",
           "kind": "pull-request",
-          "title": "chore(deps): bump next from 16.3.4 to 16.3.5 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/84",
-          "date": "2026-10-11T04:33:00Z",
+          "title": "chore(deps-dev): bump eslint from 9.39.5 to 10.13.0 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/127",
+          "date": "2026-11-03T14:25:00Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "closed"
         },
         {
-          "id": "pr-89",
+          "id": "pr-134",
           "kind": "pull-request",
-          "title": "chore(deps-dev): bump autoprefixer from 10.5.5 to 10.6.1 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/89",
-          "date": "2026-10-11T04:32:59Z",
+          "title": "chore(deps): bump lucide-react from 1.55.0 to 1.61.0 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/134",
+          "date": "2026-11-03T14:24:46Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "closed"
         },
         {
-          "id": "pr-86",
+          "id": "pr-136",
           "kind": "pull-request",
-          "title": "chore(deps): bump react-dom and @types/react-dom in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/86",
-          "date": "2026-10-11T04:32:59Z",
+          "title": "chore(deps-dev): bump @types/node from 26.6.5 to 26.6.6 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/136",
+          "date": "2026-11-03T14:24:18Z",
           "author": "dependabot[bot]",
           "bot": true,
-          "state": "closed"
+          "state": "open"
         },
         {
-          "id": "pr-85",
+          "id": "pr-132",
           "kind": "pull-request",
-          "title": "chore(deps-dev): bump eslint-config-next from 16.3.4 to 16.3.5 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/85",
-          "date": "2026-10-11T04:32:54Z",
-          "author": "dependabot[bot]",
-          "bot": true,
-          "state": "closed"
-        },
-        {
-          "id": "pr-88",
-          "kind": "pull-request",
-          "title": "chore(deps): bump react and @types/react in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/88",
-          "date": "2026-10-11T04:32:49Z",
-          "author": "dependabot[bot]",
-          "bot": true,
-          "state": "closed"
-        },
-        {
-          "id": "ee83bb8ce440bc983fee4977438caa10f9a546f1",
-          "kind": "commit",
-          "title": "fix: isolate audit logs by verified project scope",
-          "url": "https://github.com/mohripan/capsulet/commit/ee83bb8ce440bc983fee4977438caa10f9a546f1",
-          "date": "2026-10-11T04:30:14Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "c444d659e70fcc100a61d77f3d63c05f93989d7a",
-          "kind": "commit",
-          "title": "docs: hand over the rest of the citation grounding plan",
-          "url": "https://github.com/mohripan/capsulet/commit/c444d659e70fcc100a61d77f3d63c05f93989d7a",
-          "date": "2026-10-11T04:18:53Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "531372acd16af6c8fabcb47dec1fd4f7a1cf8706",
-          "kind": "commit",
-          "title": "test: trip the remaining citation gaps on the term step",
-          "url": "https://github.com/mohripan/capsulet/commit/531372acd16af6c8fabcb47dec1fd4f7a1cf8706",
-          "date": "2026-10-11T04:18:53Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "6918af703a1d892fc3c96778539b6b7e94bdd8b5",
-          "kind": "commit",
-          "title": "fix(verify): execute self-tests and isolate concurrent run evidence (refs #95, #104)",
-          "url": "https://github.com/mohripan/capsulet/commit/6918af703a1d892fc3c96778539b6b7e94bdd8b5",
-          "date": "2026-10-11T04:09:21Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "1613289a0b71def84ce78a4f58a529202a2d9c2b",
-          "kind": "commit",
-          "title": "fix(postgres): persist scoped workflows and dependencies atomically (refs #97)",
-          "url": "https://github.com/mohripan/capsulet/commit/1613289a0b71def84ce78a4f58a529202a2d9c2b",
-          "date": "2026-10-11T04:09:21Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "56064d04b928041c5e367e4bae11f53997e0f901",
-          "kind": "commit",
-          "title": "fix(postgres): make job-definition ownership atomic and SQL-scoped (refs #97)",
-          "url": "https://github.com/mohripan/capsulet/commit/56064d04b928041c5e367e4bae11f53997e0f901",
-          "date": "2026-10-10T19:24:32Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "89bb4fb09dd8dfe1b19e95d93a1e01e53ec5c6d1",
-          "kind": "commit",
-          "title": "docs: correct observability backlog table rendering (refs #117)",
-          "url": "https://github.com/mohripan/capsulet/commit/89bb4fb09dd8dfe1b19e95d93a1e01e53ec5c6d1",
-          "date": "2026-10-10T19:22:40Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "bf6215544cc9476f5db53fe9d7af2ddbeaf5c221",
-          "kind": "commit",
-          "title": "test(api): exercise service-account principals and cross-project denial (refs #97)",
-          "url": "https://github.com/mohripan/capsulet/commit/bf6215544cc9476f5db53fe9d7af2ddbeaf5c221",
-          "date": "2026-10-10T19:12:06Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "2388beb78a68af351692b85dc3fea034bb0d5fec",
-          "kind": "commit",
-          "title": "fix(security): patch dependencies and validate expiring audit exceptions (refs #99, #118)",
-          "url": "https://github.com/mohripan/capsulet/commit/2388beb78a68af351692b85dc3fea034bb0d5fec",
-          "date": "2026-10-10T19:06:34Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "382b3714e2790f1724c26682ed3305496dcd7cbc",
-          "kind": "commit",
-          "title": "fix(api): enforce typed project authorization and scoped identities (refs #97)",
-          "url": "https://github.com/mohripan/capsulet/commit/382b3714e2790f1724c26682ed3305496dcd7cbc",
-          "date": "2026-10-10T19:05:59Z",
-          "author": "mohripan",
-          "bot": false
-        },
-        {
-          "id": "pr-87",
-          "kind": "pull-request",
-          "title": "chore(deps): bump lucide-react from 1.41.0 to 1.45.0 in /dashboard",
-          "url": "https://github.com/mohripan/capsulet/pull/87",
-          "date": "2026-09-22T14:24:41Z",
+          "title": "chore(deps-dev): bump eslint-config-next from 16.4.0 to 16.4.2 in /dashboard",
+          "url": "https://github.com/mohripan/capsulet/pull/132",
+          "date": "2026-10-27T14:25:29Z",
           "author": "dependabot[bot]",
           "bot": true,
           "state": "closed"
@@ -607,6 +726,7 @@
       "name": "Capsulet Mesh Train",
       "repo": "mohripan/capsulet-mesh-train",
       "url": "https://github.com/mohripan/capsulet-mesh-train",
+      "liveUrl": null,
       "category": "AI systems",
       "summary": "Custom transports and collective algorithms for distributed training, built in C++ with planned PyTorch integration.",
       "tags": [
@@ -614,12 +734,12 @@
         "Distributed training",
         "PyTorch"
       ],
-      "language": "C++",
+      "language": "Python",
       "status": "Open source",
       "branch": "main",
       "stars": 1,
-      "pushedAt": "2026-10-16T15:57:28Z",
-      "readme": "# capsulet-mesh-train\n\nA distributed training communication engine built in C++, with PyTorch integration.\n\nThe core project implements its own transport and collective algorithms. GPU training is the main target; a four-process CPU trainer establishes correctness first. Existing communication libraries and training frameworks can attach through adapters.\n\n## Current state\n\nM1 implementation is underway. The standalone C++ core now implements blocking centralized FP32 SUM all-reduce over its own Linux TCP transport, with bounded failures and safe cleanup. Validation covers 1–5 worker processes, exact/random numerical checks, failure scenarios, and four independent containers. Python bindings and trainer parity are next.\n\nThis is an open-ended side project. Milestones describe outcomes and dependencies, with no dates or time estimates.\n\n## Start here\n\n- [Roadmap and milestone completion criteria](docs/ROADMAP.md)\n- [Build instructions and verified environments](docs/DEVELOPMENT.md)\n- [CPU MVP design](docs/superpowers/specs/2026-10-16-cpu-mvp-design.md)\n- [Decisions and their rationale](docs/DECISIONS.md)\n- [Architecture decision records](docs/adr/README.md)\n- [GitHub work index](docs/ISSUES.md)\n- [Contributor and agent navigation](AGENTS.md)\n- [Primary references](docs/REFERENCES.md)\n\n## First working example\n\nFour independent CPU processes consume different minibatches, compute gradients with PyTorch, and synchronize them through our native C++ centralized all-reduce. Their losses, averaged gradients, and updated parameters must match a single-process reference using the same combined batches within specified numerical tolerances.\n\nThe engine owns socket communication and reduction. PyTorch owns the model, autograd, and initial optimizer. Gloo, MPI, and NCCL are reference implementations or explicit adapters; benchmark baselines remain separate from our collective implementations.\n\n## Architecture\n\n```mermaid\nflowchart TB\n    Trainer[PyTorch trainer] --> Bindings[Python bindings]\n    Backend[Future torch.distributed adapter] --> Engine[C++ collective engine]\n    Bindings --> Engine\n    Engine --> TCP[Our TCP transport]\n    Engine --> External[Future transport adapters]\n    K8s[Kubernetes deployment and job admission] -. launches .-> Trainer\n```\n\nThe standalone C++ library does not require PyTorch, Python, Kubernetes, or CUDA to build. CUDA and framework integrations are optional layers.\n\n## Development and validation direction\n\nLinux is the primary runtime. Development can use Ubuntu under WSL2; Linux containers provide a reproducible deployment environment. Native Windows support has its own milestone.\n\nThe currently available machine has one NVIDIA RTX 5070 Ti Laptop GPU with approximately 12 GB VRAM. This permits CUDA integration tests. Shared-GPU tests and local containers do not establish multi-GPU or physical multi-host scaling; those results have a separate hardware-dependent milestone.\n\nLater work covers ring and tree collectives, GPU transfers and overlap, reduce-scatter/all-gather, sharded Adam states, checkpoint recovery, Kubernetes deployment with exclusive job-token pools, external transports, and a PyTorch communication backend.\n",
+      "pushedAt": "2026-10-18T12:33:27Z",
+      "readme": "# capsulet-mesh-train\n\nA distributed training communication engine built in C++, with PyTorch integration.\n\nThe core project implements its own transport and collective algorithms. GPU training is the main target; a four-process CPU trainer establishes correctness first. Existing communication libraries and training frameworks can attach through adapters.\n\n## Current state\n\nM1 and M2 are complete for Linux CPU local/container operation and shared-single-GPU functional training. The standalone C++ core implements blocking centralized FP32 SUM all-reduce over its own Linux TCP transport, with bounded failures and safe cleanup. Native validation covers 1–5 worker processes, exact/random numerical checks, failure scenarios, and four independent containers. The optional Python package exposes strict in-place NumPy buffers with retained ownership and GIL release. The optional PyTorch MLP trainer passes four-worker/100-step parity against an independent combined-batch reference, with explicit gradient averaging and rank diagnostics. The same 100-step workload passes in four independent Linux containers. Clean builds, controlled native failure groups and scoped cleanup pass locally and in [full CI](https://github.com/mohripan/capsulet-mesh-train/actions/runs/39030243246). The optional [host-staged CUDA adapter](docs/CUDA.md) also passes installed one/two-worker functional checks on the laptop GPU. The optional [CUDA MLP trainer](docs/CUDA_TRAINING.md) passes two-worker/100-step independent GPU reference parity in pinned and pageable modes. Both workers share the laptop GPU; [GPU/CI evidence](docs/openspecs/cuda-mlp-trainer/verification.md) records actual results and remaining limits. M3/#13 adds [explicit native ring SUM](docs/RING.md), duplex TCP and wire v2, with local conformance/package/container checks and [exact-revision CI](https://github.com/mohripan/capsulet-mesh-train/actions/runs/39127401157) passed. #13 is closed; next is #14's tree reduction OpenSpec. Python and trainers retain their centralized defaults.\n\nThis is an open-ended side project. Milestones describe outcomes and dependencies, with no dates or time estimates.\n\n## Start here\n\n- [Roadmap and milestone completion criteria](docs/ROADMAP.md)\n- [Build instructions and verified environments](docs/DEVELOPMENT.md)\n- [Native ring selection, protocol upgrade and focused checks](docs/RING.md)\n- [Python package, API and focused verification](docs/PYTHON.md)\n- [Host-staged CUDA tensor SUM and hardware evidence](docs/CUDA.md)\n- [CUDA model training and independent GPU reference](docs/CUDA_TRAINING.md)\n- [Run the CPU trainer and inspect numerical evidence](docs/TRAINING.md)\n- [Reproduce native failures and four-container M1 validation](docs/VALIDATION.md)\n- [CPU MVP design](docs/superpowers/specs/2026-10-16-cpu-mvp-design.md)\n- [Decisions and their rationale](docs/DECISIONS.md)\n- [Architecture decision records](docs/adr/README.md)\n- [GitHub work index](docs/ISSUES.md)\n- [Contributor and agent navigation](AGENTS.md)\n- [Repository OpenSpec workflow and skills](AGENTS.md#task-workflow-and-local-skills)\n- [Primary references](docs/REFERENCES.md)\n\n## First training target\n\nFour independent CPU processes consume different minibatches, compute gradients with PyTorch, and synchronize them through our native C++ centralized all-reduce. Their losses, averaged gradients, and updated parameters must match a single-process reference using the same combined batches within specified numerical tolerances.\n\nThe engine owns socket communication and reduction. PyTorch owns the model, autograd, and initial optimizer. Gloo, MPI, and NCCL are reference implementations or explicit adapters; benchmark baselines remain separate from our collective implementations.\n\n## Architecture\n\n```mermaid\nflowchart TB\n    Trainer[PyTorch trainer] --> Bindings[Python bindings]\n    Backend[Future torch.distributed adapter] --> Engine[C++ collective engine]\n    Bindings --> Engine\n    Engine --> TCP[Our TCP transport]\n    Engine --> External[Future transport adapters]\n    K8s[Kubernetes deployment and job admission] -. launches .-> Trainer\n```\n\nThe standalone C++ library does not require PyTorch, Python, Kubernetes, or CUDA to build. CUDA and framework integrations are optional layers.\n\n## Development and validation direction\n\nLinux is the primary runtime. Development can use Ubuntu under WSL2; Linux containers provide a reproducible deployment environment. Native Windows support has its own milestone.\n\nThe currently available machine has one NVIDIA RTX 5070 Ti Laptop GPU with approximately 12 GB VRAM. This permits CUDA integration tests. Shared-GPU tests and local containers do not establish multi-GPU or physical multi-host scaling; those results have a separate hardware-dependent milestone.\n\nLater work covers ring and tree collectives, GPU transfers and overlap, reduce-scatter/all-gather, sharded Adam states, checkpoint recovery, Kubernetes deployment with exclusive job-token pools, external transports, and a PyTorch communication backend.\n",
       "readmePath": "README.md",
       "fallbackAbout": null,
       "description": null,
@@ -627,19 +747,19 @@
         {
           "title": "M1 — Correct CPU engine and trainer",
           "description": "Own the complete CPU communication path: standalone C++ TCP engine, centralized FP32 SUM all-reduce, Python bindings, and a deterministic four-process trainer. Completion: Losses, averaged gradients, and updated parameters match the same combined-batch reference; real process/container tests and bounded failure behavior pass. No due date; see docs/ROADMAP.md.",
-          "state": "open",
+          "state": "closed",
           "url": "https://github.com/mohripan/capsulet-mesh-train/milestone/1",
-          "open": 4,
-          "closed": 3,
+          "open": 0,
+          "closed": 7,
           "due": null
         },
         {
           "title": "M2 — CUDA training functionality",
           "description": "Make GPU training use our engine through an explicit host-staged CUDA adapter while preserving the optional CPU-only build. Completion: One-GPU functional training parity, correct stream/buffer lifetime, and separate measurements of copies, reduction, and communication. No due date; see docs/ROADMAP.md.",
-          "state": "open",
+          "state": "closed",
           "url": "https://github.com/mohripan/capsulet-mesh-train/milestone/2",
-          "open": 3,
-          "closed": 0,
+          "open": 0,
+          "closed": 3,
           "due": null
         },
         {
@@ -647,8 +767,8 @@
           "description": "Implement ring and tree collectives and explain their measured behavior against a comparable CPU baseline. Completion: Correct odd-rank/uneven-size cases, reproducible Gloo comparisons, raw samples, and a calibrated ring-model analysis. No due date; see docs/ROADMAP.md.",
           "state": "open",
           "url": "https://github.com/mohripan/capsulet-mesh-train/milestone/3",
-          "open": 4,
-          "closed": 0,
+          "open": 3,
+          "closed": 1,
           "due": null
         },
         {
@@ -718,58 +838,121 @@
       "tasks": [],
       "roadmapUrl": "https://github.com/mohripan/capsulet-mesh-train/blob/main/docs/ROADMAP.md",
       "issues": {
-        "open": 35,
-        "closed": 3
+        "open": 27,
+        "closed": 11
       },
       "progress": {
         "source": "milestones",
-        "closed": 3,
+        "closed": 11,
         "total": 36,
-        "percent": 8
+        "percent": 31
       },
       "activity": [
         {
-          "id": "ce4ae7736ac1c63710564df418c8cfc91d1d443a",
+          "id": "1fa9e2cd729b0b3e5ea026d69f9c9d598093552c",
           "kind": "commit",
-          "title": "Implement centralized FP32 SUM communicator and record ADR",
-          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/ce4ae7736ac1c63710564df418c8cfc91d1d443a",
-          "date": "2026-10-16T15:57:25Z",
+          "title": "Record ring acceptance and hand off tree reduction planning",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/1fa9e2cd729b0b3e5ea026d69f9c9d598093552c",
+          "date": "2026-10-18T12:33:25Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "2ad49d8c7d2b911ae946c2eb2fa6c13a771b698a",
+          "id": "aa1c13cf97efa5eb56e9a5c8d133c36dd59e9abc",
           "kind": "commit",
-          "title": "Implement Linux TCP transport and bounded group startup",
-          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/2ad49d8c7d2b911ae946c2eb2fa6c13a771b698a",
-          "date": "2026-10-16T15:36:18Z",
+          "title": "Implement native ring all-reduce and duplex TCP communication",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/aa1c13cf97efa5eb56e9a5c8d133c36dd59e9abc",
+          "date": "2026-10-18T12:28:06Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "2b27f6d148b631f44c2e5137204fb6968e00783b",
+          "id": "00997b8fb88e3a5810d604bcc153665e519f9a44",
           "kind": "commit",
-          "title": "feat: add standalone C++ core foundation",
-          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/2b27f6d148b631f44c2e5137204fb6968e00783b",
-          "date": "2026-10-16T09:28:32Z",
+          "title": "Plan native ring all-reduce and duplex transport contracts",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/00997b8fb88e3a5810d604bcc153665e519f9a44",
+          "date": "2026-10-18T09:43:04Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "6b47bbb3dda9bc921413b139b2257e84a3c96e86",
+          "id": "5c259d3af9f15fa04af6d0444492fb0722c88f0a",
           "kind": "commit",
-          "title": "docs: define architecture, milestones, and implementation backlog",
-          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/6b47bbb3dda9bc921413b139b2257e84a3c96e86",
-          "date": "2026-10-16T09:06:47Z",
+          "title": "Record M2 acceptance and ring algorithm handoff",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/5c259d3af9f15fa04af6d0444492fb0722c88f0a",
+          "date": "2026-10-18T09:34:08Z",
           "author": "mohripan",
           "bot": false
         },
         {
-          "id": "8bb603573a160a214ad5f79cd759dcb5595513af",
+          "id": "b603284360682d9defae46a2474f25ab80ca92e6",
           "kind": "commit",
-          "title": "Initial commit",
-          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/8bb603573a160a214ad5f79cd759dcb5595513af",
-          "date": "2026-10-16T08:07:47Z",
+          "title": "Add CUDA MLP training with independent GPU reference parity",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/b603284360682d9defae46a2474f25ab80ca92e6",
+          "date": "2026-10-18T09:26:17Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "c7925bcd8685cda8df5cb0853073a4e9df45f1a1",
+          "kind": "commit",
+          "title": "Plan GPU trainer and independent CUDA reference parity",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/c7925bcd8685cda8df5cb0853073a4e9df45f1a1",
+          "date": "2026-10-17T17:28:24Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "496c245a8aa375f9dadcad5e545116eff6efc815",
+          "kind": "commit",
+          "title": "Record CUDA adapter acceptance and GPU trainer handoff",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/496c245a8aa375f9dadcad5e545116eff6efc815",
+          "date": "2026-10-17T15:17:01Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "e5575423292c90c05d8b2a05e82eb99cb1a7b588",
+          "kind": "commit",
+          "title": "Add blocking host-staged CUDA tensor SUM adapter",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/e5575423292c90c05d8b2a05e82eb99cb1a7b588",
+          "date": "2026-10-17T15:09:46Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "aa75e18fe61269968f1a296ee610e0640e080878",
+          "kind": "commit",
+          "title": "Plan explicit host-staged CUDA adapter",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/aa75e18fe61269968f1a296ee610e0640e080878",
+          "date": "2026-10-17T12:52:39Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "1a669838006527bb13fbec96c17d9810fd5bac97",
+          "kind": "commit",
+          "title": "Record M1 CI acceptance and close CPU milestone",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/1a669838006527bb13fbec96c17d9810fd5bac97",
+          "date": "2026-10-17T12:03:23Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "80903ea909fe45b91d9fbeeb9aa8dda74ed64106",
+          "kind": "commit",
+          "title": "Validate bounded failures and four-container CPU training",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/80903ea909fe45b91d9fbeeb9aa8dda74ed64106",
+          "date": "2026-10-17T11:50:38Z",
+          "author": "mohripan",
+          "bot": false
+        },
+        {
+          "id": "8f58455b4504114c367f083f678b5280f50253b9",
+          "kind": "commit",
+          "title": "Plan M1 validation and record independent OpenSpec review",
+          "url": "https://github.com/mohripan/capsulet-mesh-train/commit/8f58455b4504114c367f083f678b5280f50253b9",
+          "date": "2026-10-17T09:06:08Z",
           "author": "mohripan",
           "bot": false
         }
@@ -780,6 +963,7 @@
       "name": "FlowForge",
       "repo": "mohripan/workflow-automations",
       "url": "https://github.com/mohripan/workflow-automations",
+      "liveUrl": null,
       "category": "Workflow engines",
       "summary": "Event-driven automation in .NET. From trigger conditions to jobs running across distributed worker hosts.",
       "tags": [
@@ -1041,6 +1225,7 @@
       "name": "Harmonix",
       "repo": "mohripan/HarmonixBenar",
       "url": "https://github.com/mohripan/HarmonixBenar",
+      "liveUrl": null,
       "category": "Experiments",
       "summary": "An earlier Unity and C# project. A look back at the creative side of building software.",
       "tags": [

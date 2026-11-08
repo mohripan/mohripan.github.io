@@ -6,6 +6,7 @@ import {
   roadmapTasks,
   calculateProgress,
   githubAssetUrl,
+  liveSiteUrl,
 } from "./github.ts";
 
 test("accepts repository links and rejects external or non-repository URLs", () => {
@@ -35,6 +36,24 @@ test("a bare link is enough, disabled projects are omitted, duplicate repos are 
   assert.throws(() =>
     parseConfig([{ url: "https://github.com/me/repo", tags: "Rust" }]),
   );
+});
+test("a live site link must be a plain https address", () => {
+  assert.deepEqual(
+    parseConfig([
+      { url: "https://github.com/me/repo", liveUrl: "https://example.com" },
+    ]),
+    [{ url: "https://github.com/me/repo", liveUrl: "https://example.com" }],
+  );
+  assert.equal(liveSiteUrl("https://example.com"), "https://example.com/");
+  for (const liveUrl of [
+    "http://example.com",
+    "javascript:alert(1)",
+    "https://user:secret@example.com",
+    "not a url",
+  ])
+    assert.throws(() =>
+      parseConfig([{ url: "https://github.com/me/repo", liveUrl }]),
+    );
 });
 test("roadmaps support task lists and status tables without counting examples or legends", () => {
   const markdown =

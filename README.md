@@ -36,12 +36,13 @@ Or use an object for presentation and roadmap overrides:
   "summary": "A distributed workflow orchestration system.",
   "tags": ["C# / .NET", "Redis"],
   "roadmapPath": "docs/ROADMAP.md",
+  "liveUrl": "https://flowforge.example.com",
   "fallbackAbout": "Used when the README is absent or contains only a title.",
   "enabled": true
 }
 ```
 
-Optional fields: `name`, `category`, `summary`, `tags`, `roadmapPath`, `fallbackAbout`, `status`, and `enabled`. Set `enabled` to `false` to hide a project. Repository URLs must point to public GitHub repositories. The sync refuses private repositories even if your gh session can access them.
+Optional fields: `name`, `category`, `summary`, `tags`, `roadmapPath`, `liveUrl`, `fallbackAbout`, `status`, and `enabled`. `liveUrl` must be an `https` address; it adds a live-site link to the project card, dialog, and featured workbench. Without it, the repository's GitHub homepage is used when it is an `https` link. Set `enabled` to `false` to hide a project. Repository URLs must point to public GitHub repositories. The sync refuses private repositories even if your gh session can access them.
 
 After editing project configuration, refresh the local snapshot:
 
@@ -64,7 +65,7 @@ Progress is the completion of **tracked work**, not a whole-product estimate. Th
 3. Otherwise, show the closed/open repository issue ratio, excluding pull requests.
 4. With no tracked items, show development history without a percentage.
 
-GitHub milestone issue counts use GitHub's own values; GitHub can include PRs assigned to milestones. Repository issue counts exclude PRs. A completed checklist is displayed as complete without declaring the product finished. Closed milestone state is respected. Activity shows the latest twelve commits and twelve recently updated PRs per repository; automated authors are labeled and can be hidden. PR activity dates reflect their latest update or merge, not necessarily their creation date.
+GitHub milestone issue counts use GitHub's own values; GitHub can include PRs assigned to milestones. Repository issue counts exclude PRs. A completed checklist is displayed as complete without declaring the product finished. Closed milestone state is respected. Roadmap previews and the featured workbench center on the newest started milestone, so a long-running project opens on its current work rather than its oldest history; the full roadmap lists everything. Activity shows the latest twelve commits and twelve recently updated PRs per repository; automated authors are labeled and can be hidden. PR activity dates reflect their latest update or merge, not necessarily their creation date.
 
 README Markdown supports tables, fenced code, lists, and images. Relative documentation links resolve to GitHub; relative image paths resolve to the source files. Raw HTML is not rendered.
 

@@ -82,9 +82,16 @@ export default function ProjectDialog({
       </div>
       <p className="dialog-intro">{project.summary}</p>
       <div className="dialog-links">
-        <a href={project.url} target="_blank" rel="noreferrer">
-          View repository <ArrowUpRight size={15} />
-        </a>
+        <span className="dialog-link-group">
+          {project.liveUrl && (
+            <a href={project.liveUrl} target="_blank" rel="noreferrer">
+              Visit {new URL(project.liveUrl).host} <ArrowUpRight size={15} />
+            </a>
+          )}
+          <a href={project.url} target="_blank" rel="noreferrer">
+            View repository <ArrowUpRight size={15} />
+          </a>
+        </span>
         <span>Last push {dateLabel(project.pushedAt)}</span>
       </div>
       <div className="dialog-tabs" role="tablist" aria-label="Project details">

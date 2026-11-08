@@ -387,6 +387,16 @@ nav > a:hover {
   padding: 5px 8px;
   border-radius: 4px;
 }
+.workbench-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-transform: lowercase;
+}
+.workbench-live:hover {
+  background: #e98b681f;
+  border-color: #e98b6857;
+}
 .project-diagram {
   height: 143px;
   position: relative;
@@ -965,6 +975,11 @@ nav > a:hover {
 }
 .project-name h3 button:hover {
   color: var(--rust);
+}
+.project-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .repo-link {
   color: var(--muted);
@@ -1811,7 +1826,14 @@ nav > a:hover {
   font-size: 0.8125rem;
   color: var(--muted);
 }
-.dialog-links > a {
+.dialog-links > .dialog-link-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  font-family: inherit;
+  font-size: inherit;
+}
+.dialog-link-group > a {
   display: flex;
   align-items: center;
   gap: 7px;

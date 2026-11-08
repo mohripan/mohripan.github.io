@@ -17,6 +17,19 @@ export function repositoryFromUrl(input: string): string {
   return `${match[1]}/${match[2].replace(/\.git$/, "")}`;
 }
 
+// A deployed site must be a plain public https address, never one carrying credentials.
+export function liveSiteUrl(input: string): string {
+  let url: URL;
+  try {
+    url = new URL(input);
+  } catch {
+    throw new Error(`Expected an https site URL, got: ${input}`);
+  }
+  if (url.protocol !== "https:" || url.username || url.password)
+    throw new Error(`Expected an https site URL, got: ${input}`);
+  return url.href;
+}
+
 export function parseConfig(value: unknown): ProjectConfig[] {
   if (!Array.isArray(value) || value.length === 0)
     throw new Error(
@@ -36,10 +49,12 @@ export function parseConfig(value: unknown): ProjectConfig[] {
         "roadmapPath",
         "fallbackAbout",
         "status",
+        "liveUrl",
       ] as const) {
         if (config[key] !== undefined && typeof config[key] !== "string")
           throw new Error(`${key} must be a string.`);
       }
+      if (config.liveUrl !== undefined) liveSiteUrl(config.liveUrl);
       if (
         config.tags !== undefined &&
         (!Array.isArray(config.tags) ||

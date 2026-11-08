@@ -3,16 +3,18 @@
     "url": "https://github.com/mohripan/flint-graph",
     "name": "FlintGraph",
     "category": "AI systems",
-    "summary": "From source documents to a knowledge graph. A GraphRAG platform with traceable, citation-bearing answers.",
-    "tags": ["Python", "GraphRAG", "Temporal"],
+    "summary": "An AI-assisted studio for branching visual novels. Write with an assistant, generate reviewed art and voices, and ship a Godot game.",
+    "tags": ["Python", "Generative AI", "Godot"],
+    "status": "Live preview",
+    "liveUrl": "https://flintgraph.digital",
     "roadmapPath": "docs/ROADMAP.md"
   },
   {
     "url": "https://github.com/mohripan/capsulet",
     "name": "Capsulet",
     "category": "Workflow engines",
-    "summary": "Correctness-first AI-agent workflows. Typed graphs, governed memory, and execution you can inspect.",
-    "tags": ["Rust", "AI agents", "Workflow orchestration"]
+    "summary": "Correctness-first AI-agent workflows. Typed graphs on a durable worker, governed memory, and a deterministic kernel that issues certificates.",
+    "tags": ["Rust", "AI agents", "Durable execution"]
   },
   {
     "url": "https://github.com/mohripan/capsulet-mesh-train",
